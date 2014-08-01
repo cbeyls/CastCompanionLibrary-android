@@ -618,7 +618,9 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      * being destroyed to avoid context leak.
      */
     public void clearContext(){
-        this.mContext = null;
+    	if (null != this.mContext) {
+            this.mContext = this.mContext.getApplicationContext();
+        }
     }
 
     /**
@@ -630,8 +632,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public void clearContext(Context context){
         if (null != this.mContext && this.mContext == context) {
-            LOGD(TAG, "Cleared context: " + context);
-            this.mContext = null;
+            this.mContext = this.mContext.getApplicationContext();
         }
     }
 
