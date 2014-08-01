@@ -1606,7 +1606,6 @@ public class VideoCastManager extends BaseCastManager
      */
     public void onRemoteMediaPlayerMetadataUpdated() {
         LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached");
-        updateLockScreenMetadata();
         synchronized (mVideoConsumers) {
             for (IVideoCastConsumer consumer : mVideoConsumers) {
                 try {
