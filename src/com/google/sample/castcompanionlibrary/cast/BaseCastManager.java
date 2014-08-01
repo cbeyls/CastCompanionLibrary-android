@@ -528,7 +528,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
     /*
      * Returns true if and only if the feature is turned on
      */
-    protected boolean isFeatureEnabled(int feature) {
+    public boolean isFeatureEnabled(int feature) {
         return (feature & mCapabilities) > 0;
     }
 
