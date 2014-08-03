@@ -190,8 +190,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
                 CastMediaControlIntent.categoryForCast(mApplicationId)).build();
 
         mMediaRouterCallback = new CastMediaRouterCallback(this, context);
-        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-                MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
     }
 
     public void onWifiConnectivityChanged(boolean connected) {

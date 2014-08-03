@@ -37,6 +37,7 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
 
 import android.content.Context;
 import android.support.v7.app.MediaRouteDialogFactory;
+import android.support.v7.media.MediaRouter;
 import android.support.v7.media.MediaRouter.RouteInfo;
 import android.text.TextUtils;
 
@@ -113,6 +114,8 @@ public class DataCastManager extends BaseCastManager
 
     protected DataCastManager(Context context, String applicationId, String... namespaces) {
         super(context, applicationId);
+        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
+                MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
         mDataConsumers = Collections.synchronizedSet(new HashSet<IDataCastConsumer>());
         if (null != namespaces) {
             for (String namespace : namespaces) {
