@@ -147,7 +147,6 @@ public class VideoCastNotificationService extends Service {
                 LOGD(TAG, "onStartCommand(): Action: ACTION_VISIBILITY " + mVisible);
                 if (mVisible && null != mNotification) {
                     startForeground(NOTIFICATION_ID, mNotification);
-                    mCastManager.setContext(this);
                 } else {
                     stopForeground(true);
                 }
