@@ -59,9 +59,4 @@ public interface OnVideoCastControllerListener {
     public void onPlayPauseClicked(View v) throws CastException,
             TransientNetworkDisconnectionException, NoConnectionException;
 
-    /**
-     * Called when a configuration change happens (for example device is rotated)
-     */
-    public void onConfigurationChanged();
-
 }

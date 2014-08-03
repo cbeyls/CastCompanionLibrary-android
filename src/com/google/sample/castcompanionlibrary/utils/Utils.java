@@ -55,37 +55,6 @@ public class Utils {
     private static final String KEY_CUSTOM_DATA = "custom-data";
 
     /**
-     * Formats time in milliseconds to hh:mm:ss string format.
-     *
-     * @param millis
-     * @return
-     */
-    public static String formatMillis(int millis) {
-        String result = "";
-        int hr = millis / 3600000;
-        millis %= 3600000;
-        int min = millis / 60000;
-        millis %= 60000;
-        int sec = millis / 1000;
-        if (hr > 0) {
-            result += hr + ":";
-        }
-        if (min >= 0) {
-            if (min > 9) {
-                result += min + ":";
-            } else {
-                result += "0" + min + ":";
-            }
-        }
-        if (sec > 9) {
-            result += sec;
-        } else {
-            result += "0" + sec;
-        }
-        return result;
-    }
-
-    /**
      * A utility method to show a simple error dialog. The textual content of the dialog is provided
      * through the passed-in resource id.
      *
@@ -151,25 +120,6 @@ public class Utils {
     }
 
     /**
-     * Saves a float value under the provided key in the preference manager. If <code>value</code>
-     * is <code>Float.MIN_VALUE</code>, then the provided key will be removed from the preferences.
-     *
-     * @param context
-     * @param key
-     * @param value
-     */
-    public static void saveFloatToPreference(Context context, String key, float value) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        if (Float.MIN_VALUE == value) {
-            // we want to remove
-            pref.edit().remove(key).apply();
-        } else {
-            pref.edit().putFloat(key, value).apply();
-        }
-
-    }
-
-    /**
      * Retrieves a String value from preference manager. If no such key exists, it will return
      * <code>null</code>.
      *
@@ -180,34 +130,6 @@ public class Utils {
     public static String getStringFromPreference(Context context, String key) {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
         return pref.getString(key, null);
-    }
-
-    /**
-     * Retrieves a float value from preference manager. If no such key exists, it will return
-     * <code>Float.MIN_VALUE</code>.
-     *
-     * @param context
-     * @param key
-     * @return
-     */
-    public static float getFloatFromPreference(Context context, String key) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        return pref.getFloat(key, Float.MIN_VALUE);
-    }
-
-    /**
-     * Retrieves a boolean value from preference manager. If no such key exists, it will return the
-     * value provided as <code>defaultValue</code>
-     *
-     * @param context
-     * @param key
-     * @param defaultValue
-     * @return
-     */
-    public static boolean getBooleanFromPreference(Context context, String key,
-            boolean defaultValue) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        return pref.getBoolean(key, defaultValue);
     }
 
     /**
@@ -238,14 +160,6 @@ public class Utils {
                 dialog.show();
         }
         return false;
-    }
-
-    /**
-     * @deprecated
-     * See <code>checkGooglePlayServices</code>
-     */
-    public static boolean checkGooglePlaySevices(final Activity activity) {
-        return checkGooglePlayServices(activity);
     }
 
     /**

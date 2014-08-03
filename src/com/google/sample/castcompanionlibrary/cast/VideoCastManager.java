@@ -63,7 +63,6 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.OnFailedListener;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
-import com.google.sample.castcompanionlibrary.cast.player.IMediaAuthService;
 import com.google.sample.castcompanionlibrary.cast.player.VideoCastControllerActivity;
 import com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService;
 import com.google.sample.castcompanionlibrary.remotecontrol.RemoteControlClientCompat;
@@ -119,7 +118,6 @@ import java.util.Set;
 public class VideoCastManager extends BaseCastManager
         implements OnMiniControllerChangedListener, OnFailedListener {
 
-    public static final String EXTRA_HAS_AUTH = "hasAuth";
     public static final String EXTRA_MEDIA = "media";
     public static final String EXTRA_START_POINT = "startPoint";
     public static final String EXTRA_SHOULD_START = "shouldStart";
@@ -152,7 +150,6 @@ public class VideoCastManager extends BaseCastManager
     private final String mDataNamespace;
     private Cast.MessageReceivedCallback mDataChannel;
     private Set<IVideoCastConsumer> mVideoConsumers;
-    private IMediaAuthService mAuthService;
     private Handler mHandler;
 
     /**
@@ -395,22 +392,6 @@ public class VideoCastManager extends BaseCastManager
 
     /**
      * Launches the {@link VideoCastControllerActivity} that provides a default Cast Player page.
-     * This variation should be used when an {@link IMediaAuthService} needs to be used.
-     *
-     * @param context
-     * @param authService
-     */
-    public void startCastControllerActivity(Context context, IMediaAuthService authService) {
-        if (null != authService) {
-            this.mAuthService = authService;
-            Intent intent = new Intent(context, VideoCastControllerActivity.class);
-            intent.putExtra(EXTRA_HAS_AUTH, true);
-            context.startActivity(intent);
-        }
-    }
-
-    /**
-     * Launches the {@link VideoCastControllerActivity} that provides a default Cast Player page.
      *
      * @param ctx
      * @param mediaInfo pointing to the media that is or will be casted
@@ -421,22 +402,6 @@ public class VideoCastManager extends BaseCastManager
     public void startCastControllerActivity(Context ctx,
             MediaInfo mediaInfo, int position, boolean shouldStart) {
         startCastControllerActivity(ctx, Utils.fromMediaInfo(mediaInfo), position, shouldStart);
-    }
-
-    /**
-     * Returns the instance of {@link IMediaAuthService}, or null if there is no such instance.
-     *
-     * @return
-     */
-    public IMediaAuthService getMediaAuthService() {
-        return mAuthService;
-    }
-
-    /**
-     * Removes the pointer to the {@link IMediaAuthService} so it can be GC.
-     */
-    public void removeMediaAuthService() {
-        mAuthService = null;
     }
 
     /*============================================================================================*/
