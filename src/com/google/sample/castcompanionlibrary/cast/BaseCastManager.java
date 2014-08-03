@@ -97,9 +97,9 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     private static final int SESSION_RECOVERY_TIMEOUT = 5; // in seconds
 
     protected Context mContext;
-    protected MediaRouter mMediaRouter;
-    protected MediaRouteSelector mMediaRouteSelector;
-    protected CastMediaRouterCallback mMediaRouterCallback;
+    protected final MediaRouter mMediaRouter;
+    protected final MediaRouteSelector mMediaRouteSelector;
+    protected final CastMediaRouterCallback mMediaRouterCallback;
     protected CastDevice mSelectedCastDevice;
     protected String mDeviceName;
     private final Set<IBaseCastConsumer> mBaseCastConsumers = Collections
@@ -281,9 +281,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
             if (null != mApiClient) {
                 LOGD(TAG, "Trying to disconnect");
                 mApiClient.disconnect();
-                if (null != mMediaRouter) {
-                    mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
-                }
+                mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
                 mApiClient = null;
             }
             mSessionId = null;
@@ -419,16 +417,10 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     protected void onUiVisibilityChanged(boolean visible) {
         if (visible) {
-            if (null != mMediaRouter && null != mMediaRouterCallback) {
-                LOGD(TAG, "onUiVisibilityChanged() addCallback called");
-                mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-                        MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
-            }
+        	mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
+        			MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
         } else {
-            if (null != mMediaRouter) {
-                LOGD(TAG, "onUiVisibilityChanged() removeCallback called");
-                mMediaRouter.removeCallback(mMediaRouterCallback);
-            }
+            mMediaRouter.removeCallback(mMediaRouterCallback);
         }
     }
 
@@ -986,9 +978,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
                 + ", reason: " + result.toString());
         mConnectionSuspened = false;
         setDevice(null, mDestroyOnDisconnect);
-        if (null != mMediaRouter) {
-            mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
-        }
+        mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
         boolean showError = false;
         if (null != mBaseCastConsumers) {
             synchronized (mBaseCastConsumers) {

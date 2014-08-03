@@ -24,7 +24,6 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources.NotFoundException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -66,7 +65,6 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDi
 import com.google.sample.castcompanionlibrary.cast.player.VideoCastControllerActivity;
 import com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService;
 import com.google.sample.castcompanionlibrary.remotecontrol.RemoteControlClientCompat;
-import com.google.sample.castcompanionlibrary.remotecontrol.RemoteControlHelper;
 import com.google.sample.castcompanionlibrary.remotecontrol.VideoIntentReceiver;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 import com.google.sample.castcompanionlibrary.utils.Utils;
@@ -142,6 +140,7 @@ public class VideoCastManager extends BaseCastManager
     private final AudioManager mAudioManager;
     private RemoteMediaPlayer mRemoteMediaPlayer;
     private RemoteControlClientCompat mRemoteControlClientCompat;
+    private boolean mIsRemoteControlSetup;
     private VolumeType mVolumeType = VolumeType.DEVICE;
     private int mState = MediaStatus.PLAYER_STATE_IDLE;
     private int mIdleReason;
@@ -792,10 +791,7 @@ public class VideoCastManager extends BaseCastManager
 
     private void onApplicationDisconnected(int errorCode) {
         LOGD(TAG, "onApplicationDisconnected() reached with error code: " + errorCode);
-        updateRemoteControl(false);
-        if (null != mRemoteControlClientCompat && isFeatureEnabled(FEATURE_LOCKSCREEN)) {
-            mRemoteControlClientCompat.removeFromMediaRouter(mMediaRouter);
-        }
+        removeRemoteControlClient();
         synchronized (mVideoConsumers) {
             for (IVideoCastConsumer consumer : mVideoConsumers) {
                 try {
@@ -805,9 +801,7 @@ public class VideoCastManager extends BaseCastManager
                 }
             }
         }
-        if (null != mMediaRouter) {
-            mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
-        }
+        mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
         onDeviceSelected(null);
         updateMiniControllersVisibility(false);
         stopNotificationService();
@@ -989,9 +983,7 @@ public class VideoCastManager extends BaseCastManager
             }
 
             onDeviceSelected(null);
-            if (null != mMediaRouter) {
-                mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
-            }
+            mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
         }
     }
 
@@ -1581,13 +1573,17 @@ public class VideoCastManager extends BaseCastManager
                 }
             }
         }
-        updateLockScreenMetadata();
-        try {
-            updateLockScreenImage(getRemoteMediaInformation());
-        } catch (TransientNetworkDisconnectionException e) {
-            LOGE(TAG, "Failed to update lock screen metadaa due to a network issue", e);
-        } catch (NoConnectionException e) {
-            LOGE(TAG, "Failed to update lock screen metadaa due to a network issue", e);
+
+        if (mRemoteControlClientCompat != null) {
+	        try {
+	        	MediaInfo info = getRemoteMediaInformation();
+	            updateLockScreenImage(info);
+	            updateLockScreenMetadata(info);
+	        } catch (TransientNetworkDisconnectionException e) {
+	            LOGE(TAG, "Failed to update lock screen metadata due to a network issue", e);
+	        } catch (NoConnectionException e) {
+	            LOGE(TAG, "Failed to update lock screen metadata due to a network issue", e);
+	        }
         }
     }
 
@@ -1601,9 +1597,6 @@ public class VideoCastManager extends BaseCastManager
      */
     @SuppressLint("InlinedApi")
     private void setUpRemoteControl(final MediaInfo info) {
-        if (!isFeatureEnabled(BaseCastManager.FEATURE_LOCKSCREEN)) {
-            return;
-        }
         LOGD(TAG, "setupRemoteControl() was called");
         mAudioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
@@ -1612,29 +1605,25 @@ public class VideoCastManager extends BaseCastManager
                 mContext, VideoIntentReceiver.class.getName());
         mAudioManager.registerMediaButtonEventReceiver(eventReceiver);
 
-        if (mRemoteControlClientCompat == null) {
-            Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-            intent.setComponent(mMediaButtonReceiverComponent);
-            mRemoteControlClientCompat = new RemoteControlClientCompat(
-                    PendingIntent.getBroadcast(mContext, 0, intent, 0));
-            RemoteControlHelper.registerRemoteControlClient(mAudioManager,
-                    mRemoteControlClientCompat);
+        mIsRemoteControlSetup = true;
+
+        // Only instantiate RemoteControlClient on supported Android versions
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+        	return;
         }
+
+        Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        intent.setComponent(mMediaButtonReceiverComponent);
+        mRemoteControlClientCompat = new RemoteControlClientCompat(PendingIntent.getBroadcast(mContext, 0, intent, 0));
+        mRemoteControlClientCompat.register(mAudioManager);
         mRemoteControlClientCompat.addToMediaRouter(mMediaRouter);
-        mRemoteControlClientCompat.setTransportControlFlags(
-                RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE);
-        if (null == info) {
-            mRemoteControlClientCompat.setPlaybackState(RemoteControlClient.PLAYSTATE_PAUSED);
-            return;
-        } else {
-            mRemoteControlClientCompat.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING);
-        }
+        mRemoteControlClientCompat.setTransportControlFlags(RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE);
 
         // Update the remote control's image
         updateLockScreenImage(info);
 
         // update the remote control's metadata
-        updateLockScreenMetadata();
+        updateLockScreenMetadata(info);
     }
 
     /*
@@ -1645,19 +1634,17 @@ public class VideoCastManager extends BaseCastManager
             return;
         }
         new Thread(new Runnable() {
-            @Override
+            @SuppressLint("InlinedApi")
+			@Override
             public void run() {
-                if (null == mRemoteControlClientCompat) {
-                    return;
-                }
                 try {
                     Bitmap bm = getBitmapForLockScreen(info);
-                    if (null == bm) {
+                    if ((null == bm) || (null == mRemoteControlClientCompat)) {
                         return;
                     }
+                    // TODO Do this on the UI thread instead
                     mRemoteControlClientCompat.editMetadata(false).putBitmap(
-                            RemoteControlClientCompat.MetadataEditorCompat.
-                                    METADATA_KEY_ARTWORK, bm
+                            RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm
                     ).apply();
                 } catch (Exception e) {
                     LOGD(TAG, "Failed to update lock screen image", e);
@@ -1724,14 +1711,13 @@ public class VideoCastManager extends BaseCastManager
             return;
         }
         try {
-            if (null == mRemoteControlClientCompat && playing) {
+            if (!mIsRemoteControlSetup && playing) {
                 setUpRemoteControl(getRemoteMediaInformation());
             }
             if (mRemoteControlClientCompat != null) {
                 int playState = isRemoteStreamLive() ? RemoteControlClient.PLAYSTATE_BUFFERING
                         : RemoteControlClient.PLAYSTATE_PLAYING;
-                mRemoteControlClientCompat
-                        .setPlaybackState(playing ? playState
+                mRemoteControlClientCompat.setPlaybackState(playing ? playState
                                 : RemoteControlClient.PLAYSTATE_PAUSED);
             }
         } catch (TransientNetworkDisconnectionException e) {
@@ -1745,48 +1731,36 @@ public class VideoCastManager extends BaseCastManager
      * On ICS and JB, lock screen metadata is one liner: Title - Album Artist - Album. On KitKat, it
      * has two lines: Title , Album Artist - Album
      */
-    private void updateLockScreenMetadata() {
-        if (null == mRemoteControlClientCompat || !isFeatureEnabled(FEATURE_LOCKSCREEN)) {
+    private void updateLockScreenMetadata(MediaInfo info) {
+        if (null == info) {
             return;
         }
 
-        try {
-            // Update the remote controls
-            MediaInfo info = getRemoteMediaInformation();
-            if (null == info) {
-                return;
-            }
-            final MediaMetadata mm = info.getMetadata();
-
-            mRemoteControlClientCompat.editMetadata(false)
-                    .putString(MediaMetadataRetriever.METADATA_KEY_TITLE,
-                            mm.getString(MediaMetadata.KEY_TITLE))
-                    .putString(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST,
-                            mContext.getResources().getString(
-                                    R.string.casting_to_device, getDeviceName()))
-                    .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
-                            info.getStreamDuration())
-                    .apply();
-        } catch (NotFoundException e) {
-            LOGE(TAG, "Failed to update RCC due to resource not found", e);
-        } catch (TransientNetworkDisconnectionException e) {
-            LOGE(TAG, "Failed to update RCC due to network issues", e);
-        } catch (NoConnectionException e) {
-            LOGE(TAG, "Failed to update RCC due to network issues", e);
-        }
+        // Update the remote controls
+        final MediaMetadata mm = info.getMetadata();
+        mRemoteControlClientCompat.editMetadata(false)
+                .putString(MediaMetadataRetriever.METADATA_KEY_TITLE, mm.getString(MediaMetadata.KEY_TITLE))
+                .putString(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST,
+                        mContext.getResources().getString(R.string.casting_to_device, getDeviceName()))
+                .putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, info.getStreamDuration())
+                .apply();
     }
 
     /*
      * Removes the remote control client
      */
     private void removeRemoteControlClient() {
-        if (isFeatureEnabled(FEATURE_LOCKSCREEN)) {
+        if (mIsRemoteControlSetup) {
+        	ComponentName eventReceiver = new ComponentName(mContext, VideoIntentReceiver.class.getName());
+            mAudioManager.unregisterMediaButtonEventReceiver(eventReceiver);
             mAudioManager.abandonAudioFocus(null);
             if (null != mRemoteControlClientCompat) {
-                RemoteControlHelper.unregisterRemoteControlClient(mAudioManager,
-                        mRemoteControlClientCompat);
+            	mRemoteControlClientCompat.removeFromMediaRouter(mMediaRouter);
+            	mRemoteControlClientCompat.unregister(mAudioManager);
                 mRemoteControlClientCompat = null;
             }
+
+            mIsRemoteControlSetup = false;
         }
     }
 
