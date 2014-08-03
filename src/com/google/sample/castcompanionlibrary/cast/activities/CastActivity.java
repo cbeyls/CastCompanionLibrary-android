@@ -62,6 +62,18 @@ public class CastActivity extends ActionBarActivity {
 	}
 
 	@Override
+	protected void onStart() {
+		super.onStart();
+		mCastManager.incrementUiCounter();
+	}
+
+	@Override
+	protected void onStop() {
+		mCastManager.decrementUiCounter();
+		super.onStop();
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
 		mCastManager.setContext(this);

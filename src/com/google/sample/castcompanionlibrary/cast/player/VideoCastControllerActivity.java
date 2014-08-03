@@ -27,8 +27,6 @@ import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
 import com.google.sample.castcompanionlibrary.cast.activities.CastActivity;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
-import com.google.sample.castcompanionlibrary.cast.player.IVideoCastController;
-import com.google.sample.castcompanionlibrary.cast.player.OnVideoCastControllerListener;
 import com.google.sample.castcompanionlibrary.utils.Utils;
 
 /**
@@ -95,18 +93,6 @@ public class VideoCastControllerActivity extends CastActivity implements IVideoC
 			finish();
 			startActivity(intent);
 		}
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-		mCastManager.incrementUiCounter();
-	}
-
-	@Override
-	protected void onStop() {
-		mCastManager.decrementUiCounter();
-		super.onStop();
 	}
 
 	@Override
