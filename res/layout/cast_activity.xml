@@ -74,7 +74,7 @@
                     android:gravity="center_vertical"
                     android:maxLines="1"
                     android:text="@string/live"
-                    android:textColor="@color/white"
+                    android:textColor="@android:color/white"
                     android:visibility="invisible" />
 
                 <LinearLayout
@@ -89,7 +89,7 @@
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:text="00:00"
-                        android:textColor="@color/white" />
+                        android:textColor="@android:color/white" />
 
                     <SeekBar
                         android:id="@+id/seekBar1"
@@ -108,7 +108,7 @@
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:text="0:00"
-                        android:textColor="@color/white" />
+                        android:textColor="@android:color/white" />
                 </LinearLayout>
             </FrameLayout>
         </LinearLayout>
