@@ -16,7 +16,6 @@
 
 package com.google.sample.castcompanionlibrary.widgets;
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 
 import com.google.android.gms.cast.MediaInfo;
@@ -36,13 +35,6 @@ public interface IMiniController {
      * @param uri
      */
     public void setIcon(Uri uri);
-
-    /**
-     * Sets the bitmap for the album art
-     *
-     * @param bitmap
-     */
-    public void setIcon(Bitmap bitmap);
 
     /**
      * Sets the title
@@ -72,7 +64,7 @@ public interface IMiniController {
      *
      * @param visibility
      */
-    public void setVisibility(int visibility);
+    public void setVisibility(boolean isVisible);
 
     /**
      * Returns the visibility state of this widget

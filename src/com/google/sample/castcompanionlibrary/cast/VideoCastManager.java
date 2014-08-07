@@ -36,7 +36,6 @@ import android.os.Message;
 import android.support.v7.app.MediaRouteDialogFactory;
 import android.support.v7.media.MediaRouter.RouteInfo;
 import android.text.TextUtils;
-import android.view.View;
 
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
@@ -295,13 +294,13 @@ public class VideoCastManager extends BaseCastManager
     /*
      * (non-Javadoc)
      * @see com.google.sample.castcompanionlibrary.widgets.MiniController.
-     * OnMiniControllerChangedListener#onPlayPauseClicked(android.view.View)
+     * OnMiniControllerChangedListener#onPlayPauseClicked()
      * @throws TransientNetworkDisconnectionException
      * @throws NoConnectionException
      * @throws CastException
      */
     @Override
-    public void onPlayPauseClicked(View v) throws CastException,
+    public void onPlayPauseClicked() throws CastException,
             TransientNetworkDisconnectionException, NoConnectionException {
         checkConnectivity();
         if (mState == MediaStatus.PLAYER_STATE_PLAYING) {
@@ -339,7 +338,7 @@ public class VideoCastManager extends BaseCastManager
         if (null != mMiniControllers) {
             synchronized (mMiniControllers) {
                 for (IMiniController controller : mMiniControllers) {
-                    controller.setVisibility(visible ? View.VISIBLE : View.GONE);
+                    controller.setVisibility(visible);
                 }
             }
         }
@@ -1823,9 +1822,10 @@ public class VideoCastManager extends BaseCastManager
                 miniController.setOnMiniControllerChangedListener(null == onChangedListener ? this
                         : onChangedListener);
                 try {
-                    if (isConnected() && isRemoteMediaLoaded()) {
+                	boolean isVisible = isConnected() && isRemoteMediaLoaded();
+                	miniController.setVisibility(isVisible);
+                    if (isVisible) {
                         updateMiniController(miniController);
-                        miniController.setVisibility(View.VISIBLE);
                     }
                 } catch (TransientNetworkDisconnectionException e) {
                     LOGE(TAG, "Failed to get the status of media playback on receiver", e);

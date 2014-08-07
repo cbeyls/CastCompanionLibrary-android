@@ -1,64 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/bigContainer"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:paddingTop="0dp" >
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="8dp" >
 
     <ImageView
         android:id="@+id/iconView"
         android:layout_width="@dimen/mini_controller_icon_width"
         android:layout_height="@dimen/mini_controller_icon_height"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="7dp"
-        android:src="@drawable/mini_controller_img_placeholder"/>
+        android:layout_gravity="center_vertical"
+        android:scaleType="centerCrop"
+        android:src="@drawable/mini_controller_img_placeholder" />
 
-    <ImageView
-        android:id="@+id/playPauseView"
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/titleView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-light"
+            android:singleLine="true"
+            android:textSize="@dimen/mini_controller_font_size_line1" />
+
+        <TextView
+            android:id="@+id/subTitleView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-light"
+            android:singleLine="true"
+            android:textSize="@dimen/mini_controller_font_size_line2" />
+    </LinearLayout>
+
+    <FrameLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="4dp"
-        android:src="@drawable/ic_mini_controller_pause"/>
+        android:layout_height="match_parent" >
 
-    <ProgressBar
-        android:id="@+id/loadingView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/playPauseView"
-        android:layout_alignLeft="@+id/playPauseView"
-        android:layout_alignRight="@+id/playPauseView"
-        android:layout_alignTop="@+id/playPauseView"
-        android:layout_centerVertical="true"
-        android:visibility="gone"/>
+        <ImageView
+            android:id="@+id/playPauseView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_mini_controller_pause" />
 
-    <TextView
-        android:id="@+id/titleView"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/iconView"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginTop="6dp"
-        android:layout_toLeftOf="@+id/playPauseView"
-        android:layout_toRightOf="@+id/iconView"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textSize="@dimen/mini_controller_font_size_line1"/>
+        <ProgressBar
+            android:id="@+id/loadingView"
+            style="?android:attr/android:progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+    </FrameLayout>
 
-    <TextView
-        android:id="@+id/subTitleView"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/iconView"
-        android:layout_alignLeft="@+id/titleView"
-        android:layout_alignRight="@+id/titleView"
-        android:layout_marginBottom="7dp"
-        android:layout_toLeftOf="@+id/playPauseView"
-        android:layout_toRightOf="@+id/iconView"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textSize="@dimen/mini_controller_font_size_line2"/>
-
-</RelativeLayout>
+</LinearLayout>
