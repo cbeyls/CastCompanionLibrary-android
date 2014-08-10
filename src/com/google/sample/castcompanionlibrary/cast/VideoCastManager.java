@@ -1554,32 +1554,41 @@ public class VideoCastManager extends BaseCastManager
             double volume = getVolume();
             boolean isMute = isMute();
             boolean makeUiHidden = false;
-            if (mState == MediaStatus.PLAYER_STATE_PLAYING) {
-                LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = playing");
+            switch(mState) {
+            case MediaStatus.PLAYER_STATE_PLAYING:
+            	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = playing");
                 updateRemoteControl(true);
-            } else if (mState == MediaStatus.PLAYER_STATE_PAUSED) {
-                LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = paused");
+                break;
+            case MediaStatus.PLAYER_STATE_PAUSED:
+            	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = paused");
                 updateRemoteControl(false);
-            } else if (mState == MediaStatus.PLAYER_STATE_IDLE) {
-                LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = idle");
+            	break;
+            case MediaStatus.PLAYER_STATE_IDLE:
+            	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = idle");
                 updateRemoteControl(false);
-                if (mIdleReason == MediaStatus.IDLE_REASON_FINISHED) {
-                    removeRemoteControlClient();
+                switch(mIdleReason) {
+                case MediaStatus.IDLE_REASON_FINISHED:
+                	removeRemoteControlClient();
                     makeUiHidden = true;
-                } else if (mIdleReason == MediaStatus.IDLE_REASON_ERROR) {
-                    // something bad happened on the cast device
+                	break;
+                case MediaStatus.IDLE_REASON_ERROR:
+                	// something bad happened on the cast device
                     LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): IDLE reason = ERROR");
-                    makeUiHidden = true;
                     removeRemoteControlClient();
+                    makeUiHidden = true;
                     onFailed(R.string.failed_receiver_player_error, NO_STATUS_CODE);
-                } else if (mIdleReason == MediaStatus.IDLE_REASON_CANCELED) {
-                    LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): IDLE reason = CANCELLED");
+                    break;
+                case MediaStatus.IDLE_REASON_CANCELED:
+                	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): IDLE reason = CANCELLED");
                     makeUiHidden = !isRemoteStreamLive();
+                	break;
                 }
-            } else if (mState == MediaStatus.PLAYER_STATE_BUFFERING) {
-                LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = buffering");
-            } else {
-                LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = unknown");
+                break;
+            case MediaStatus.PLAYER_STATE_BUFFERING:
+            	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = buffering");
+            	break;
+            default:
+            	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = unknown");
                 makeUiHidden = true;
             }
             if (makeUiHidden) {
