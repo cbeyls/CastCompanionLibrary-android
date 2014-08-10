@@ -1700,9 +1700,11 @@ public class VideoCastManager extends BaseCastManager
     			mLockScreenImageRequest = null;
     			return;
     		}
-			if (mRemoteControlClientCompat != null) {
+    		// Create a new copy of the bitmap since the MetadataEditor may recycle it
+    		Bitmap bm2 = bm.copy(bm.getConfig(), false);
+			if ((bm2 != null) && (mRemoteControlClientCompat != null)) {
 				mRemoteControlClientCompat.editMetadata(false)
-					.putBitmap(RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm)
+					.putBitmap(RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm2)
 					.apply();
             }
 		}
