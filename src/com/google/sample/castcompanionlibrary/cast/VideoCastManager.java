@@ -20,7 +20,6 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -236,7 +235,7 @@ public class VideoCastManager extends BaseCastManager
             String dataNamespace, ImageLoader imageLoader) {
         super(context, applicationId);
         LOGD(TAG, "VideoCastManager is instantiated");
-        mVideoConsumers = Collections.synchronizedSet(new HashSet<IVideoCastConsumer>());
+        mVideoConsumers = new HashSet<IVideoCastConsumer>();
         mDataNamespace = dataNamespace;
         if (null == targetActivity) {
             targetActivity = VideoCastControllerActivity.class;
@@ -859,13 +858,11 @@ public class VideoCastManager extends BaseCastManager
     private void onApplicationDisconnected(int errorCode) {
         LOGD(TAG, "onApplicationDisconnected() reached with error code: " + errorCode);
         removeRemoteControlClient();
-        synchronized (mVideoConsumers) {
-            for (IVideoCastConsumer consumer : mVideoConsumers) {
-                try {
-                    consumer.onApplicationDisconnected(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onApplicationDisconnected(): Failed to inform " + consumer, e);
-                }
+        for (IVideoCastConsumer consumer : mVideoConsumers) {
+            try {
+                consumer.onApplicationDisconnected(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onApplicationDisconnected(): Failed to inform " + consumer, e);
             }
         }
         mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
@@ -883,13 +880,11 @@ public class VideoCastManager extends BaseCastManager
             appStatus = Cast.CastApi.getApplicationStatus(mApiClient);
             LOGD(TAG, "onApplicationStatusChanged() reached: "
                     + Cast.CastApi.getApplicationStatus(mApiClient));
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        consumer.onApplicationStatusChanged(appStatus);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onApplicationStatusChanged(): Failed to inform " + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    consumer.onApplicationStatusChanged(appStatus);
+                } catch (Exception e) {
+                    LOGE(TAG, "onApplicationStatusChanged(): Failed to inform " + consumer, e);
                 }
             }
         } catch (IllegalStateException e1) {
@@ -899,23 +894,19 @@ public class VideoCastManager extends BaseCastManager
 
     private void onVolumeChanged() {
         LOGD(TAG, "onVolumeChanged() reached");
-        double volume = 0;
         try {
-            volume = getVolume();
+            double volume = getVolume();
             boolean isMute = isMute();
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        consumer.onVolumeChanged(volume, isMute);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onVolumeChanged(): Failed to inform " + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    consumer.onVolumeChanged(volume, isMute);
+                } catch (Exception e) {
+                    LOGE(TAG, "onVolumeChanged(): Failed to inform " + consumer, e);
                 }
             }
         } catch (Exception e1) {
             LOGE(TAG, "Failed to get volume", e1);
         }
-
     }
 
     @Override
@@ -960,13 +951,11 @@ public class VideoCastManager extends BaseCastManager
 
                         }
                     });
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        consumer.onApplicationConnected(appMetadata, mSessionId, wasLaunched);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onApplicationConnected(): Failed to inform " + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    consumer.onApplicationConnected(appMetadata, mSessionId, wasLaunched);
+                } catch (Exception e) {
+                    LOGE(TAG, "onApplicationConnected(): Failed to inform " + consumer, e);
                 }
             }
         } catch (TransientNetworkDisconnectionException e) {
@@ -996,13 +985,11 @@ public class VideoCastManager extends BaseCastManager
      */
     @Override
     public void onApplicationStopFailed(int errorCode) {
-        synchronized (mVideoConsumers) {
-            for (IVideoCastConsumer consumer : mVideoConsumers) {
-                try {
-                    consumer.onApplicationStopFailed(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onApplicationLaunched(): Failed to inform " + consumer, e);
-                }
+        for (IVideoCastConsumer consumer : mVideoConsumers) {
+            try {
+                consumer.onApplicationStopFailed(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onApplicationLaunched(): Failed to inform " + consumer, e);
             }
         }
     }
@@ -1021,13 +1008,11 @@ public class VideoCastManager extends BaseCastManager
             return;
         } else {
             boolean showError = false;
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        showError = showError || consumer.onApplicationConnectionFailed(errorCode);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onApplicationLaunchFailed(): Failed to inform " + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    showError = showError || consumer.onApplicationConnectionFailed(errorCode);
+                } catch (Exception e) {
+                    LOGE(TAG, "onApplicationLaunchFailed(): Failed to inform " + consumer, e);
                 }
             }
             if (showError) {
@@ -1451,13 +1436,11 @@ public class VideoCastManager extends BaseCastManager
 
             @Override
             public void onMessageReceived(CastDevice castDevice, String namespace, String message) {
-                synchronized (mVideoConsumers) {
-                    for (IVideoCastConsumer consumer : mVideoConsumers) {
-                        try {
-                            consumer.onDataMessageReceived(message);
-                        } catch (Exception e) {
-                            LOGE(TAG, "onMessageReceived(): Failed to inform " + consumer, e);
-                        }
+                for (IVideoCastConsumer consumer : mVideoConsumers) {
+                    try {
+                        consumer.onDataMessageReceived(message);
+                    } catch (Exception e) {
+                        LOGE(TAG, "onMessageReceived(): Failed to inform " + consumer, e);
                     }
                 }
             }
@@ -1484,13 +1467,11 @@ public class VideoCastManager extends BaseCastManager
     }
 
     private void onMessageSendFailed(int errorCode) {
-        synchronized (mVideoConsumers) {
-            for (IVideoCastConsumer consumer : mVideoConsumers) {
-                try {
-                    consumer.onDataMessageSendFailed(errorCode);
-                } catch (Exception e) {
-                    LOGE(TAG, "onMessageSendFailed(): Failed to inform " + consumer, e);
-                }
+        for (IVideoCastConsumer consumer : mVideoConsumers) {
+            try {
+                consumer.onDataMessageSendFailed(errorCode);
+            } catch (Exception e) {
+                LOGE(TAG, "onMessageSendFailed(): Failed to inform " + consumer, e);
             }
         }
     }
@@ -1607,15 +1588,13 @@ public class VideoCastManager extends BaseCastManager
                 updateMiniControllersPlaybackStatus();
             }
             updateMiniControllersVisibility(!makeUiHidden);
-            synchronized (mVideoConsumers) {
-                for (IVideoCastConsumer consumer : mVideoConsumers) {
-                    try {
-                        consumer.onRemoteMediaPlayerStatusUpdated();
-                        consumer.onVolumeChanged(volume, isMute);
-                    } catch (Exception e) {
-                        LOGE(TAG, "onRemoteMediaPlayerStatusUpdated(): Failed to inform "
-                                + consumer, e);
-                    }
+            for (IVideoCastConsumer consumer : mVideoConsumers) {
+                try {
+                    consumer.onRemoteMediaPlayerStatusUpdated();
+                    consumer.onVolumeChanged(volume, isMute);
+                } catch (Exception e) {
+                    LOGE(TAG, "onRemoteMediaPlayerStatusUpdated(): Failed to inform "
+                            + consumer, e);
                 }
             }
         } catch (TransientNetworkDisconnectionException e) {
@@ -1631,14 +1610,11 @@ public class VideoCastManager extends BaseCastManager
      */
     public void onRemoteMediaPlayerMetadataUpdated() {
         LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached");
-        synchronized (mVideoConsumers) {
-            for (IVideoCastConsumer consumer : mVideoConsumers) {
-                try {
-                    consumer.onRemoteMediaPlayerMetadataUpdated();
-                } catch (Exception e) {
-                    LOGE(TAG, "onRemoteMediaPlayerMetadataUpdated(): Failed to inform " + consumer,
-                            e);
-                }
+        for (IVideoCastConsumer consumer : mVideoConsumers) {
+            try {
+                consumer.onRemoteMediaPlayerMetadataUpdated();
+            } catch (Exception e) {
+                LOGE(TAG, "onRemoteMediaPlayerMetadataUpdated(): Failed to inform " + consumer, e);
             }
         }
 
@@ -1832,12 +1808,10 @@ public class VideoCastManager extends BaseCastManager
      * @param listener
      * @see VideoCastConsumerImpl
      */
-    public synchronized void addVideoCastConsumer(IVideoCastConsumer listener) {
+    public void addVideoCastConsumer(IVideoCastConsumer listener) {
         if (null != listener) {
             super.addBaseCastConsumer(listener);
-            synchronized (mVideoConsumers) {
-                mVideoConsumers.add(listener);
-            }
+            mVideoConsumers.add(listener);
             LOGD(TAG, "Successfully added the new CastConsumer listener " + listener);
         }
     }
@@ -1847,12 +1821,10 @@ public class VideoCastManager extends BaseCastManager
      *
      * @param listener
      */
-    public synchronized void removeVideoCastConsumer(IVideoCastConsumer listener) {
+    public void removeVideoCastConsumer(IVideoCastConsumer listener) {
         if (null != listener) {
             super.removeBaseCastConsumer(listener);
-            synchronized (mVideoConsumers) {
-                mVideoConsumers.remove(listener);
-            }
+            mVideoConsumers.remove(listener);
         }
     }
 
