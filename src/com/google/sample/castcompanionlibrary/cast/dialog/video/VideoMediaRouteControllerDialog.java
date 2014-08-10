@@ -17,12 +17,9 @@
 package com.google.sample.castcompanionlibrary.cast.dialog.video;
 
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
-
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.MediaRouteControllerDialog;
 import android.view.LayoutInflater;
@@ -40,9 +37,8 @@ import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerIm
 import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
+import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
-
-import java.net.URL;
 
 /**
  * A custom {@link MediaRouteControllerDialog} that provides an album art, a play/pause button and
@@ -59,15 +55,13 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
     private TextView mSubTitle;
     private TextView mEmptyText;
     private ProgressBar mLoading;
-    private Uri mIconUri;
+    private ImageLoader.Request mIconRequest;
     private VideoCastManager mCastManager;
     protected int mState;
     private VideoCastConsumerImpl castConsumerImpl;
     private Drawable mPauseDrawable;
     private Drawable mPlayDrawable;
     private Drawable mStopDrawable;
-    private Context mContext;
-    private boolean mClosed;
     private View mIconContainer;
 
     private int mStreamType;
@@ -90,7 +84,6 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
     public VideoMediaRouteControllerDialog(Context context) {
         super(context, R.style.CastDialog);
         try {
-            this.mContext = context;
             mCastManager = VideoCastManager.getInstance();
             mState = mCastManager.getPlaybackStatus();
             castConsumerImpl = new VideoCastConsumerImpl() {
@@ -146,6 +139,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
             return;
         } catch (Exception e) {
             LOGE(TAG, "Failed to get media information", e);
+            return;
         }
         if (null == info) {
             hideControls(true, R.string.no_media_info);
@@ -156,47 +150,23 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
         MediaMetadata mm = info.getMetadata();
         mTitle.setText(mm.getString(MediaMetadata.KEY_TITLE));
         mSubTitle.setText(mm.getString(MediaMetadata.KEY_SUBTITLE));
-        setIcon(mm.hasImages() ? mm.getImages().get(0).getUrl() : null);
+        setIcon(mm.hasImages() ? mm.getImages().get(0).getUrl().toString() : null);
     }
 
-    public void setIcon(Uri uri) {
-        if (null != mIconUri && mIconUri.equals(uri)) {
-            return;
-        }
-        mIconUri = uri;
-        if (null == uri) {
-            Bitmap bm = BitmapFactory.decodeResource(
-                    mContext.getResources(), R.drawable.video_placeholder_200x200);
-            mIcon.setImageBitmap(bm);
-            return;
-        }
-        new Thread(new Runnable() {
-            Bitmap bm = null;
+    private final ImageLoader.Callbacks mIconImageLoaderCallbacks = new ImageLoader.Callbacks() {
+		
+		@Override
+		public void onResponse(Bitmap bm) {
+			if (bm == null) {
+				mIcon.setImageResource(R.drawable.video_placeholder_200x200);
+			} else {
+				mIcon.setImageBitmap(bm);
+			}
+		}
+	};
 
-            @Override
-            public void run() {
-                try {
-                    URL imgUrl = new URL(mIconUri.toString());
-                    bm = BitmapFactory.decodeStream(imgUrl.openStream());
-                } catch (Exception e) {
-                    LOGE(TAG, "setIcon(): Failed to load the image with url: " +
-                            mIconUri + ", using the default one", e);
-                    bm = BitmapFactory.decodeResource(
-                            mContext.getResources(), R.drawable.video_placeholder_200x200);
-                }
-                if (mClosed) {
-                    return;
-                }
-                mIcon.post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        mIcon.setImageBitmap(bm);
-                    }
-                });
-
-            }
-        }).start();
+    public void setIcon(String url) {
+    	mIconRequest = mCastManager.loadImage(url, mIconImageLoaderCallbacks, mIconRequest);
     }
 
     private void updatePlayPauseState(int state) {
@@ -273,7 +243,8 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
         if (null != castConsumerImpl) {
             mCastManager.removeVideoCastConsumer(castConsumerImpl);
         }
-        mClosed = true;
+        mCastManager.cancelImageRequest(mIconRequest);
+        mIconRequest = null;
     }
 
     /**
@@ -326,10 +297,8 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
                 if (null != mCastManager
                         && null != mCastManager.getTargetActivity()) {
                     try {
-                        mCastManager.onTargetActivityInvoked(mContext);
-                    } catch (TransientNetworkDisconnectionException e) {
-                        LOGE(TAG, "Failed to start the target activity due to network issues", e);
-                    } catch (NoConnectionException e) {
+                        mCastManager.onTargetActivityInvoked(v.getContext());
+                    } catch (Exception e) {
                         LOGE(TAG, "Failed to start the target activity due to network issues", e);
                     }
                     cancel();

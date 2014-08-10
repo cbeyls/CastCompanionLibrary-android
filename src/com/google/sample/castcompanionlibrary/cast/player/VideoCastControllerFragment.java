@@ -1,14 +1,11 @@
 package com.google.sample.castcompanionlibrary.cast.player;
 
-import java.net.URL;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -25,6 +22,7 @@ import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerIm
 import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
+import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
 import com.google.sample.castcompanionlibrary.utils.Utils;
 
 /**
@@ -41,8 +39,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 	private VideoCastManager mCastManager;
 	private Handler mHandler;
 	private IVideoCastController mCastController;
-	private AsyncTask<String, Void, Bitmap> mImageAsyncTask;
-	private UrlAndBitmap mUrlAndBitmap;
+	private ImageLoader.Request mImageRequest;
 	private int mPlaybackState = MediaStatus.PLAYER_STATE_UNKNOWN;
 	private boolean mIsFresh = false;
 
@@ -206,51 +203,23 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 		mCastController.adjustControllersForLiveStream(streamType == MediaInfo.STREAM_TYPE_LIVE);
 	}
 
+	private final ImageLoader.Callbacks mImageLoaderCallbacks = new ImageLoader.Callbacks() {
+
+		@Override
+		public void onResponse(Bitmap bitmap) {
+			if (bitmap == null) {
+				bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.dummy_album_art_large);
+			}
+			mCastController.setImage(bitmap);
+		}
+	};
+
 	/*
 	 * Gets the image at the given url and populates the image view with that. It tries to cache the
 	 * image to avoid unnecessary network calls.
 	 */
-	private void showImage(final String url) {
-		if (null != mImageAsyncTask) {
-			mImageAsyncTask.cancel(true);
-		}
-		if (null == url) {
-			mCastController.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.dummy_album_art_large));
-			return;
-		}
-		if (null != mUrlAndBitmap && mUrlAndBitmap.isMatch(url)) {
-			// we can reuse mBitmap
-			mCastController.setImage(mUrlAndBitmap.mBitmap);
-			return;
-		}
-		mUrlAndBitmap = null;
-		mImageAsyncTask = new AsyncTask<String, Void, Bitmap>() {
-
-			@Override
-			protected Bitmap doInBackground(String... params) {
-				String uri = params[0];
-				try {
-					URL imgUrl = new URL(uri);
-					return BitmapFactory.decodeStream(imgUrl.openStream());
-				} catch (Exception e) {
-				}
-				return null;
-			}
-
-			@Override
-			protected void onPostExecute(Bitmap bitmap) {
-				if (null != bitmap) {
-					mUrlAndBitmap = new UrlAndBitmap();
-					mUrlAndBitmap.mBitmap = bitmap;
-					mUrlAndBitmap.mUrl = url;
-					mCastController.setImage(bitmap);
-				} else {
-					mCastController.setImage(BitmapFactory.decodeResource(getResources(), R.drawable.dummy_album_art_large));
-				}
-			}
-		};
-
-		mImageAsyncTask.execute(url);
+	private void showImage(String url) {
+		mImageRequest = mCastManager.loadImage(url, mImageLoaderCallbacks, mImageRequest);
 	}
 
 	private void updatePlayerStatus() {
@@ -313,12 +282,8 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 
 	@Override
 	public void onDestroy() {
-		if (null != mImageAsyncTask) {
-			mImageAsyncTask.cancel(true);
-		}
-		if (null != mUrlAndBitmap) {
-			mUrlAndBitmap.mBitmap = null;
-		}
+		mCastManager.cancelImageRequest(mImageRequest);
+		mImageRequest = null;
 		super.onDestroy();
 	}
 
@@ -376,19 +341,6 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 			}
 			restartTrickplayTimer();
 			break;
-		}
-	}
-
-	/*
-	 * A simple class that holds a URL and a bitmap, mainly used to cache the fetched image
-	 */
-	private static class UrlAndBitmap {
-
-		private Bitmap mBitmap;
-		private String mUrl;
-
-		private boolean isMatch(String url) {
-			return null != url && null != mBitmap && url.equals(mUrl);
 		}
 	}
 }

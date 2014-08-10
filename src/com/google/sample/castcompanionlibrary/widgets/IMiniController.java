@@ -16,7 +16,7 @@
 
 package com.google.sample.castcompanionlibrary.widgets;
 
-import android.net.Uri;
+import android.graphics.Bitmap;
 
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaStatus;
@@ -30,11 +30,11 @@ import com.google.sample.castcompanionlibrary.widgets.MiniController.OnMiniContr
 public interface IMiniController {
 
     /**
-     * Sets the uri for the album art
+     * Sets the bitmap for the album art
      *
-     * @param uri
+     * @param bitmap
      */
-    public void setIcon(Uri uri);
+    public void setIcon(Bitmap bitmap);
 
     /**
      * Sets the title

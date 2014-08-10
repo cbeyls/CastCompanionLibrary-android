@@ -19,6 +19,14 @@ package com.google.sample.castcompanionlibrary.cast;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.json.JSONObject;
+
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -61,6 +69,8 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.OnFailedListener;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
+import com.google.sample.castcompanionlibrary.cast.imageloader.DefaultImageLoader;
+import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
 import com.google.sample.castcompanionlibrary.cast.player.VideoCastControllerActivity;
 import com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService;
 import com.google.sample.castcompanionlibrary.remotecontrol.RemoteControlClientCompat;
@@ -70,16 +80,6 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
 import com.google.sample.castcompanionlibrary.widgets.IMiniController;
 import com.google.sample.castcompanionlibrary.widgets.MiniController;
 import com.google.sample.castcompanionlibrary.widgets.MiniController.OnMiniControllerChangedListener;
-
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A concrete subclass of {@link BaseCastManager} that is suitable for casting video contents (it
@@ -136,9 +136,12 @@ public class VideoCastManager extends BaseCastManager
     private static VideoCastManager sInstance;
     private final Class<?> mTargetActivity;
     private final Set<IMiniController> mMiniControllers;
+    private Bitmap mMiniControllersIcon;
+    private ImageLoader.Request mMiniControllersIconRequest;
     private final AudioManager mAudioManager;
     private RemoteMediaPlayer mRemoteMediaPlayer;
     private RemoteControlClientCompat mRemoteControlClientCompat;
+    private ImageLoader.Request mLockScreenImageRequest;
     private boolean mIsRemoteControlSetup;
     private VolumeType mVolumeType = VolumeType.DEVICE;
     private int mState = MediaStatus.PLAYER_STATE_IDLE;
@@ -149,6 +152,7 @@ public class VideoCastManager extends BaseCastManager
     private Cast.MessageReceivedCallback mDataChannel;
     private Set<IVideoCastConsumer> mVideoConsumers;
     private Handler mHandler;
+    private final ImageLoader mImageLoader;
 
     /**
      * Initializes the VideoCastManager for clients. Before clients can use VideoCastManager, they
@@ -164,11 +168,12 @@ public class VideoCastManager extends BaseCastManager
      * player.
      * @param dataNamespace if not <code>null</code>, a custom data channel with this namespace
      * will be created.
+     * @param imageLoader A custom ImageLoader implementation. If null, the default one will be used.
      * @return
      * @see getInstance()
      */
     public static synchronized VideoCastManager initialize(Context context,
-            String applicationId, Class<?> targetActivity, String dataNamespace) {
+            String applicationId, Class<?> targetActivity, String dataNamespace, ImageLoader imageLoader) {
         if (null == sInstance) {
             LOGD(TAG, "New instance of VideoCastManager is created");
             if (ConnectionResult.SUCCESS != GooglePlayServicesUtil
@@ -176,10 +181,15 @@ public class VideoCastManager extends BaseCastManager
                 String msg = "Couldn't find the appropriate version of Goolge Play Services";
                 LOGE(TAG, msg);
             }
-            sInstance = new VideoCastManager(context, applicationId, targetActivity, dataNamespace);
+            sInstance = new VideoCastManager(context, applicationId, targetActivity, dataNamespace, imageLoader);
             mCastManager = sInstance;
         }
         return sInstance;
+    }
+
+    public static VideoCastManager initialize(Context context,
+            String applicationId, Class<?> targetActivity, String dataNamespace) {
+    	return initialize(context, applicationId, targetActivity, dataNamespace, null);
     }
 
     /**
@@ -223,7 +233,7 @@ public class VideoCastManager extends BaseCastManager
     }
 
     private VideoCastManager(Context context, String applicationId, Class<?> targetActivity,
-            String dataNamespace) {
+            String dataNamespace, ImageLoader imageLoader) {
         super(context, applicationId);
         LOGD(TAG, "VideoCastManager is instantiated");
         mVideoConsumers = Collections.synchronizedSet(new HashSet<IVideoCastConsumer>());
@@ -239,12 +249,44 @@ public class VideoCastManager extends BaseCastManager
                     dataNamespace);
         }
 
-        mMiniControllers = Collections.synchronizedSet(new HashSet<IMiniController>());
+        mMiniControllers = new HashSet<IMiniController>();
 
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mMediaButtonReceiverComponent = new ComponentName(context, VideoIntentReceiver.class);
 
         mHandler = new Handler(new UpdateNotificationHandlerCallback());
+
+        if (null == imageLoader) {
+        	imageLoader = new DefaultImageLoader();
+        }
+        mImageLoader = imageLoader;
+    }
+
+    public ImageLoader getImageLoader() {
+    	return mImageLoader;
+    }
+
+    public ImageLoader.Request loadImage(String url, ImageLoader.Callbacks callbacks, ImageLoader.Request previousRequest) {
+    	if (TextUtils.isEmpty(url)) {
+			cancelImageRequest(previousRequest);
+			callbacks.onResponse(null);
+			return null;
+		}
+    	if (previousRequest != null) {
+    		if (url.equals(previousRequest.getUrl())) {
+    			// The previous request is still valid.
+				return previousRequest;
+    		} else {
+    			mImageLoader.cancelRequest(previousRequest);
+    		}
+    	}
+    	return mImageLoader.load(url, callbacks);
+    }
+
+    public void cancelImageRequest(ImageLoader.Request request) {
+    	if (request != null) {
+    		mImageLoader.cancelRequest(request);
+    	}
     }
 
     /*============================================================================================*/
@@ -253,42 +295,71 @@ public class VideoCastManager extends BaseCastManager
 
     /**
      * Updates the information and state of a MiniController.
-     *
-     * @throws TransientNetworkDisconnectionException
-     * @throws NoConnectionException
      */
-    private void updateMiniController(IMiniController controller)
-            throws TransientNetworkDisconnectionException, NoConnectionException {
-        checkConnectivity();
-        checkRemoteMediaPlayerAvailable();
-        if (mRemoteMediaPlayer.getStreamDuration() > 0 || isRemoteStreamLive()) {
-            MediaInfo mediaInfo = getRemoteMediaInformation();
+    private void updateMiniController(IMiniController controller, MediaInfo mediaInfo) {
+        if (mediaInfo != null) {
             MediaMetadata mm = mediaInfo.getMetadata();
             controller.setStreamType(mediaInfo.getStreamType());
-            controller.setPlaybackStatus(mState, mIdleReason);
-            controller.setSubTitle(mContext.getResources().getString(R.string.casting_to_device,
-                    mDeviceName));
+            controller.setSubTitle(mContext.getResources().getString(R.string.casting_to_device, mDeviceName));
             controller.setTitle(mm.getString(MediaMetadata.KEY_TITLE));
-            if (!mm.getImages().isEmpty()) {
-                controller.setIcon(mm.getImages().get(0).getUrl());
+            controller.setIcon(mMiniControllersIcon);
+        }
+    }
+
+    /**
+     * Updates the information of all MiniControllers.
+     */
+    private void updateMiniControllers(MediaInfo mediaInfo) {
+        if (!mMiniControllers.isEmpty()) {
+        	loadMiniControllersIcon(mediaInfo);
+            for (IMiniController controller : mMiniControllers) {
+                try {
+                    updateMiniController(controller, mediaInfo);
+                } catch (Exception e) {/* silent failure */
+                }
             }
         }
     }
 
-    /*
-     * Updates the information and state of all MiniControllers
+    /**
+     * Updates the state of all MiniControllers.
      */
-    private void updateMiniControllers() {
-        if (null != mMiniControllers && !mMiniControllers.isEmpty()) {
-            synchronized (mMiniControllers) {
-                for (final IMiniController controller : mMiniControllers) {
-                    try {
-                        updateMiniController(controller);
-                    } catch (Exception e) {/* silent failure */
-                    }
+    private void updateMiniControllersPlaybackStatus() {
+    	if (!mMiniControllers.isEmpty()) {
+            for (IMiniController controller : mMiniControllers) {
+                try {
+                	controller.setPlaybackStatus(mState, mIdleReason);
+                } catch (Exception e) {/* silent failure */
                 }
             }
         }
+    }
+
+    private final ImageLoader.Callbacks mMiniControllerImageLoaderCallbacks = new ImageLoader.Callbacks() {
+
+		@Override
+		public void onResponse(Bitmap bitmap) {
+			if (bitmap == null) {
+				// Retry next time
+				mMiniControllersIconRequest = null;
+			}
+			mMiniControllersIcon = bitmap;
+            for (IMiniController controller : mMiniControllers) {
+                controller.setIcon(bitmap);
+            }
+		}
+    };
+
+    private void loadMiniControllersIcon(MediaInfo mediaInfo) {
+        if (mediaInfo == null) {
+        	return;
+        }
+        MediaMetadata mm = mediaInfo.getMetadata();
+        String url = null;
+        if (!mm.getImages().isEmpty()) {
+        	url = mm.getImages().get(0).getUrl().toString();
+        }
+        mMiniControllersIconRequest = loadImage(url, mMiniControllerImageLoaderCallbacks, mMiniControllersIconRequest);
     }
 
     /*
@@ -334,13 +405,10 @@ public class VideoCastManager extends BaseCastManager
      * @param visible
      */
     public void updateMiniControllersVisibility(boolean visible) {
-        LOGD(TAG, "updateMiniControllersVisibility() reached with visibility: " + visible);
-        if (null != mMiniControllers) {
-            synchronized (mMiniControllers) {
-                for (IMiniController controller : mMiniControllers) {
-                    controller.setVisibility(visible);
-                }
-            }
+        if (!mMiniControllers.isEmpty()) {
+	        for (IMiniController controller : mMiniControllers) {
+	            controller.setVisibility(visible);
+	        }
         }
     }
 
@@ -1535,9 +1603,10 @@ public class VideoCastManager extends BaseCastManager
             }
             if (makeUiHidden) {
                 stopNotificationService();
+            } else {
+                updateMiniControllersPlaybackStatus();
             }
             updateMiniControllersVisibility(!makeUiHidden);
-            updateMiniControllers();
             synchronized (mVideoConsumers) {
                 for (IVideoCastConsumer consumer : mVideoConsumers) {
                     try {
@@ -1573,17 +1642,13 @@ public class VideoCastManager extends BaseCastManager
             }
         }
 
+    	// At this point, mRemoteMediaPlayer cannot be null and new info has just been pushed
+    	MediaInfo info = mRemoteMediaPlayer.getMediaInfo();
         if (mRemoteControlClientCompat != null) {
-	        try {
-	        	MediaInfo info = getRemoteMediaInformation();
-	            updateLockScreenImage(info);
-	            updateLockScreenMetadata(info);
-	        } catch (TransientNetworkDisconnectionException e) {
-	            LOGE(TAG, "Failed to update lock screen metadata due to a network issue", e);
-	        } catch (NoConnectionException e) {
-	            LOGE(TAG, "Failed to update lock screen metadata due to a network issue", e);
-	        }
+            updateLockScreenImage(info);
+            updateLockScreenMetadata(info);
         }
+        updateMiniControllers(info);
     }
 
     /*============================================================================================*/
@@ -1625,76 +1690,64 @@ public class VideoCastManager extends BaseCastManager
         updateLockScreenMetadata(info);
     }
 
+    private final ImageLoader.Callbacks mLockScreenImageLoaderCallbacks = new ImageLoader.Callbacks() {
+
+    	@SuppressLint("InlinedApi")
+		@Override
+		public void onResponse(Bitmap bm) {
+    		if (bm == null) {
+    			// Retry later
+    			mLockScreenImageRequest = null;
+    			return;
+    		}
+			if (mRemoteControlClientCompat != null) {
+				mRemoteControlClientCompat.editMetadata(false)
+					.putBitmap(RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm)
+					.apply();
+            }
+		}
+    };
+
     /*
      * Updates lock screen image
      */
-    private void updateLockScreenImage(final MediaInfo info) {
+    @SuppressLint("InlinedApi")
+	private void updateLockScreenImage(MediaInfo info) {
         if (null == info) {
             return;
         }
-        new Thread(new Runnable() {
-            @SuppressLint("InlinedApi")
-			@Override
-            public void run() {
-                try {
-                    Bitmap bm = getBitmapForLockScreen(info);
-                    if ((null == bm) || (null == mRemoteControlClientCompat)) {
-                        return;
-                    }
-                    // TODO Do this on the UI thread instead
-                    mRemoteControlClientCompat.editMetadata(false).putBitmap(
-                            RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm
-                    ).apply();
-                } catch (Exception e) {
-                    LOGD(TAG, "Failed to update lock screen image", e);
-                }
+        String imageUrl = getBitmapUrlForLockScreen(info);
+        if (TextUtils.isEmpty(imageUrl)) {
+        	cancelImageRequest(mLockScreenImageRequest);
+        	mLockScreenImageRequest = null;
+        	// we don't have a url for image so get a placeholder image from resources
+        	int imageResId = (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2)
+        			? R.drawable.dummy_album_art_large : R.drawable.dummy_album_art_small;
+            Bitmap bm = BitmapFactory.decodeResource(mContext.getResources(), imageResId);
+            if (bm != null) {
+	            mRemoteControlClientCompat.editMetadata(false)
+					.putBitmap(RemoteControlClient.MetadataEditor.BITMAP_KEY_ARTWORK, bm)
+					.apply();
             }
-        }).start();
+            return;
+        }
+        mLockScreenImageRequest = loadImage(imageUrl, mLockScreenImageLoaderCallbacks, mLockScreenImageRequest);
     }
 
     /*
-     * Returns the {@link Bitmap} appropriate for the right size image for lock screen. In ICS and
+     * Returns the Bitmap url appropriate for the right size image for lock screen. In ICS and
      * JB, the image shown on the lock screen is a small size bitmap but for KitKat, the image is a
      * full-screen image so we need to separately handle these two cases.
      */
-    private Bitmap getBitmapForLockScreen(MediaInfo video) {
-        if (null == video) {
-            return null;
-        }
-        URL imgUrl = null;
-        Bitmap bm = null;
-        List<WebImage> images = video.getMetadata().getImages();
-        try {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                if (images.size() > 1) {
-                    imgUrl = new URL(images.get(1).getUrl().toString());
-                } else if (images.size() == 1) {
-                    imgUrl = new URL(images.get(0).getUrl().toString());
-                } else if (null != mContext) {
-                    // we don't have a url for image so get a placeholder image from resources
-                    bm = BitmapFactory.decodeResource(mContext.getResources(),
-                            R.drawable.dummy_album_art_large);
-                }
-            } else if (!images.isEmpty()) {
-                imgUrl = new URL(images.get(0).getUrl().toString());
-            } else {
-                // we don't have a url for image so get a placeholder image from resources
-                bm = BitmapFactory.decodeResource(mContext.getResources(),
-                        R.drawable.dummy_album_art_small);
-            }
-        } catch (MalformedURLException e) {
-            LOGE(TAG, "Failed to get the url for images", e);
-        }
-
-        if (null != imgUrl) {
-            try {
-                bm = BitmapFactory.decodeStream(imgUrl.openStream());
-            } catch (IOException e) {
-                LOGE(TAG, "Failed to decoded a bitmap for url: " + imgUrl, e);
-            }
-        }
-
-        return bm;
+    private String getBitmapUrlForLockScreen(MediaInfo video) {
+    	List<WebImage> images = video.getMetadata().getImages();
+    	if ((Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) && (images.size() > 1)) {
+    		return images.get(1).getUrl().toString();
+    	}
+    	if (!images.isEmpty()) {
+    		return images.get(0).getUrl().toString();
+    	}
+    	return null;
     }
 
     /*
@@ -1757,6 +1810,8 @@ public class VideoCastManager extends BaseCastManager
             	mRemoteControlClientCompat.removeFromMediaRouter(mMediaRouter);
             	mRemoteControlClientCompat.unregister(mAudioManager);
                 mRemoteControlClientCompat = null;
+                cancelImageRequest(mLockScreenImageRequest);
+            	mLockScreenImageRequest = null;
             }
 
             mIsRemoteControlSetup = false;
@@ -1814,23 +1869,21 @@ public class VideoCastManager extends BaseCastManager
     public void addMiniController(IMiniController miniController,
             OnMiniControllerChangedListener onChangedListener) {
         if (null != miniController) {
-            boolean result = false;
-            synchronized (mMiniControllers) {
-                result = mMiniControllers.add(miniController);
-            }
-            if (result) {
+            if (mMiniControllers.add(miniController)) {
                 miniController.setOnMiniControllerChangedListener(null == onChangedListener ? this
                         : onChangedListener);
-                try {
-                	boolean isVisible = isConnected() && isRemoteMediaLoaded();
-                	miniController.setVisibility(isVisible);
-                    if (isVisible) {
-                        updateMiniController(miniController);
-                    }
-                } catch (TransientNetworkDisconnectionException e) {
-                    LOGE(TAG, "Failed to get the status of media playback on receiver", e);
-                } catch (NoConnectionException e) {
-                    LOGE(TAG, "Failed to get the status of media playback on receiver", e);
+                MediaInfo mediaInfo = (mRemoteMediaPlayer == null) ? null
+                		: mRemoteMediaPlayer.getMediaInfo();
+            	if (mMiniControllers.size() == 1) {
+            		loadMiniControllersIcon(mediaInfo);
+            	}
+            	boolean isVisible = isConnected() && (mState == MediaStatus.PLAYER_STATE_PAUSED)
+            			|| (mState == MediaStatus.PLAYER_STATE_BUFFERING)
+                        || (mState == MediaStatus.PLAYER_STATE_PLAYING);
+            	miniController.setVisibility(isVisible);
+                if (isVisible) {
+                    updateMiniController(miniController, mediaInfo);
+                	miniController.setPlaybackStatus(mState, mIdleReason);
                 }
                 LOGD(TAG, "Successfully added the new MiniController " + miniController);
             } else {
@@ -1857,9 +1910,12 @@ public class VideoCastManager extends BaseCastManager
      */
     public void removeMiniController(IMiniController listener) {
         if (null != listener) {
-            synchronized (mMiniControllers) {
-                mMiniControllers.remove(listener);
-            }
+        	mMiniControllers.remove(listener);
+        	if (mMiniControllers.isEmpty()) {
+        		cancelImageRequest(mMiniControllersIconRequest);
+        		mMiniControllersIconRequest = null;
+        		mMiniControllersIcon = null;
+        	}
         }
     }
 

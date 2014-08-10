@@ -1,13 +1,9 @@
 package com.google.sample.castcompanionlibrary.widgets;
 
-import java.net.URL;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,7 +45,7 @@ public class MiniController extends FrameLayout implements IMiniController {
 	protected View mLoading;
 
 	private OnMiniControllerChangedListener mListener;
-	private Uri mIconUri;
+	private Bitmap mCurrentBitmap;
 	private Drawable mPauseDrawable;
 	private Drawable mPlayDrawable;
 	private Drawable mStopDrawable;
@@ -86,6 +82,7 @@ public class MiniController extends FrameLayout implements IMiniController {
 			@Override
 			public void onClick(View v) {
 				if (null != mListener) {
+					mPlayPause.setVisibility(View.INVISIBLE);
 					setLoadingVisibility(true);
 					try {
 						mListener.onPlayPauseClicked();
@@ -134,46 +131,17 @@ public class MiniController extends FrameLayout implements IMiniController {
 		mStreamType = streamType;
 	}
 
-	private void setIcon(Bitmap bm) {
+	@Override
+	public void setIcon(Bitmap bm) {
+		if (bm == mCurrentBitmap) {
+			return;
+		}
 		if (bm == null) {
 			mIcon.setImageResource(R.drawable.mini_controller_img_placeholder);
 		} else {
 			mIcon.setImageBitmap(bm);
 		}
-	}
-
-	@Override
-	public void setIcon(Uri uri) {
-		if (null != mIconUri && mIconUri.equals(uri)) {
-			return;
-		}
-
-		mIconUri = uri;
-
-		if (uri == null) {
-			setIcon((Bitmap) null);
-			return;
-		}
-
-		new Thread(new Runnable() {
-			Bitmap bm = null;
-
-			@Override
-			public void run() {
-				try {
-					URL imgUrl = new URL(mIconUri.toString());
-					bm = BitmapFactory.decodeStream(imgUrl.openStream());
-				} catch (Exception e) {
-				}
-				mIcon.post(new Runnable() {
-
-					@Override
-					public void run() {
-						setIcon(bm);
-					}
-				});
-			}
-		}).start();
+		mCurrentBitmap = bm;
 	}
 
 	@Override
@@ -192,40 +160,34 @@ public class MiniController extends FrameLayout implements IMiniController {
 		case MediaStatus.PLAYER_STATE_PLAYING:
 			mPlayPause.setVisibility(View.VISIBLE);
 			mPlayPause.setImageDrawable(getPauseStopButton());
-			setLoadingVisibility(false);
 			break;
 		case MediaStatus.PLAYER_STATE_PAUSED:
 			mPlayPause.setVisibility(View.VISIBLE);
 			mPlayPause.setImageDrawable(mPlayDrawable);
-			setLoadingVisibility(false);
 			break;
 		case MediaStatus.PLAYER_STATE_IDLE:
 			switch (mStreamType) {
 			case MediaInfo.STREAM_TYPE_BUFFERED:
 				mPlayPause.setVisibility(View.INVISIBLE);
-				setLoadingVisibility(false);
 				break;
 			case MediaInfo.STREAM_TYPE_LIVE:
 				if (idleReason == MediaStatus.IDLE_REASON_CANCELED) {
 					mPlayPause.setVisibility(View.VISIBLE);
 					mPlayPause.setImageDrawable(mPlayDrawable);
-					setLoadingVisibility(false);
 				} else {
 					mPlayPause.setVisibility(View.INVISIBLE);
-					setLoadingVisibility(false);
 				}
 				break;
 			}
 			break;
 		case MediaStatus.PLAYER_STATE_BUFFERING:
 			mPlayPause.setVisibility(View.INVISIBLE);
-			setLoadingVisibility(true);
 			break;
 		default:
 			mPlayPause.setVisibility(View.INVISIBLE);
-			setLoadingVisibility(false);
 			break;
 		}
+		setLoadingVisibility(state == MediaStatus.PLAYER_STATE_BUFFERING);
 	}
 
 	@Override
