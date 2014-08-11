@@ -17,6 +17,7 @@
 package com.google.sample.castcompanionlibrary.cast.dialog.video;
 
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -27,7 +28,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaStatus;
@@ -247,7 +247,8 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
     /**
      * Initializes this dialog's set of playback buttons and adds click listeners.
      */
-    @Override
+    @SuppressLint("InflateParams")
+	@Override
     public View onCreateMediaControlView(Bundle savedInstanceState) {
         LayoutInflater inflater = getLayoutInflater();
         View controls = inflater.inflate(R.layout.custom_media_route_controller_controls_dialog,
