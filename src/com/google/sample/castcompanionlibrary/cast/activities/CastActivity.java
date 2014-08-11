@@ -10,7 +10,6 @@ import com.google.android.gms.cast.MediaStatus;
 import com.google.sample.castcompanionlibrary.R;
 import com.google.sample.castcompanionlibrary.cast.BaseCastManager;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.utils.Utils;
 
 /**
@@ -40,11 +39,7 @@ public class CastActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		try {
-			mCastManager = VideoCastManager.getInstance(this);
-		} catch (CastException e) {
-		}
+		mCastManager = VideoCastManager.getInstance(this);
 	}
 
 	/**

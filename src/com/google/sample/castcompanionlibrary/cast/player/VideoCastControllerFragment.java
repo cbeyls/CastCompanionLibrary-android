@@ -19,7 +19,6 @@ import com.google.android.gms.cast.MediaStatus;
 import com.google.sample.castcompanionlibrary.R;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
 import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
@@ -61,10 +60,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 		mCastController = (IVideoCastController) activity;
-		try {
-			mCastManager = VideoCastManager.getInstance(activity);
-		} catch (CastException e) {
-		}
+		mCastManager = VideoCastManager.getInstance(activity);
 	}
 
 	@Override
@@ -317,11 +313,11 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 	}
 
 	@Override
-	public void onPlayPauseClicked(View v) throws CastException, TransientNetworkDisconnectionException, NoConnectionException {
+	public void onPlayPauseClicked(View v) throws TransientNetworkDisconnectionException, NoConnectionException {
 		togglePlayback();
 	}
 
-	private void togglePlayback() throws CastException, TransientNetworkDisconnectionException, NoConnectionException {
+	private void togglePlayback() throws TransientNetworkDisconnectionException, NoConnectionException {
 		switch (mPlaybackState) {
 		case MediaStatus.PLAYER_STATE_PAUSED:
 			setPlaybackStatus(MediaStatus.PLAYER_STATE_BUFFERING);

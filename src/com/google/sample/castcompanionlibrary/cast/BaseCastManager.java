@@ -82,10 +82,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     public static final int FEATURE_NOTIFICATION = 4;
     public static final int FEATURE_LOCKSCREEN = 2;
     public static final String PREFS_KEY_SESSION_ID = "session-id";
-    public static final String PREFS_KEY_APPLICATION_ID = "application-id";
-    public static final String PREFS_KEY_CAST_ACTIVITY_NAME = "cast-activity-name";
-    public static final String PREFS_KEY_CAST_CUSTOM_DATA_NAMESPACE = "cast-custom-data-namespace";
-    public static final String PREFS_KEY_VOLUME_INCREMENT = "volume-increment";
     public static final String PREFS_KEY_ROUTE_ID = "route-id";
 
     public static final int NO_STATUS_CODE = -1;
@@ -180,7 +176,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
         mContext = context;
         mHandler = new Handler(Looper.getMainLooper());
         mApplicationId = applicationId;
-        Utils.saveStringToPreference(mContext, PREFS_KEY_APPLICATION_ID, applicationId);
 
         LOGD(TAG, "Application ID is: " + mApplicationId);
         mMediaRouter = MediaRouter.getInstance(context);

@@ -34,7 +34,6 @@ import com.google.android.gms.cast.MediaStatus;
 import com.google.sample.castcompanionlibrary.R;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
 import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
@@ -109,8 +108,6 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
             mPauseDrawable = context.getResources().getDrawable(R.drawable.ic_av_pause_sm_dark);
             mPlayDrawable = context.getResources().getDrawable(R.drawable.ic_av_play_sm_dark);
             mStopDrawable = context.getResources().getDrawable(R.drawable.ic_av_stop_sm_dark);
-        } catch (CastException e) {
-            LOGE(TAG, "Failed to update the content of dialog", e);
         } catch (IllegalStateException e) {
             LOGE(TAG, "Failed to update the content of dialog", e);
         }
@@ -276,9 +273,6 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
                 try {
                     adjustControlsVisibility(false);
                     mCastManager.togglePlayback();
-                } catch (CastException e) {
-                    adjustControlsVisibility(true);
-                    LOGE(TAG, "Failed to toggle playback", e);
                 } catch (TransientNetworkDisconnectionException e) {
                     adjustControlsVisibility(true);
                     LOGE(TAG, "Failed to toggle playback due to network issues", e);

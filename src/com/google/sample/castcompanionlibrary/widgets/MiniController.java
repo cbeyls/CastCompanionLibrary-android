@@ -15,7 +15,6 @@ import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.sample.castcompanionlibrary.R;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.OnFailedListener;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
@@ -86,8 +85,6 @@ public class MiniController extends FrameLayout implements IMiniController {
 					setLoadingVisibility(true);
 					try {
 						mListener.onPlayPauseClicked();
-					} catch (CastException e) {
-						mListener.onFailed(R.string.failed_perform_action, -1);
 					} catch (TransientNetworkDisconnectionException e) {
 						mListener.onFailed(R.string.failed_no_connection_trans, -1);
 					} catch (NoConnectionException e) {
@@ -226,9 +223,8 @@ public class MiniController extends FrameLayout implements IMiniController {
 		 * 
 		 * @throws TransientNetworkDisconnectionException
 		 * @throws NoConnectionException
-		 * @throws CastException
 		 */
-		public void onPlayPauseClicked() throws CastException, TransientNetworkDisconnectionException, NoConnectionException;
+		public void onPlayPauseClicked() throws TransientNetworkDisconnectionException, NoConnectionException;
 
 		/**
 		 * Notification that the user has clicked on the album art

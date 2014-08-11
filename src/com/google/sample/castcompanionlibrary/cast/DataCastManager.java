@@ -29,7 +29,6 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.sample.castcompanionlibrary.cast.callbacks.DataCastConsumerImpl;
 import com.google.sample.castcompanionlibrary.cast.callbacks.IDataCastConsumer;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
@@ -89,7 +88,7 @@ public class DataCastManager extends BaseCastManager
      * Initializes the DataCastManager for clients. Before clients can use DataCastManager, they
      * need to initialize it by calling this static method. Then clients can obtain an instance of
      * this singleton class by calling {@link DataCastManager#getInstance()}. Failing to initialize
-     * this class before requesting an instance will result in a {@link CastException} exception.
+     * this class before requesting an instance will result in an IllegalStateException exception.
      *
      * @param context
      * @param applicationId the unique ID for your application
@@ -125,25 +124,23 @@ public class DataCastManager extends BaseCastManager
     }
 
     /**
-     * Returns the initialized instance of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown.
+     * Returns the initialized instance of this class. If it is not initialized yet, an
+     * IllegalStateException will be thrown.
      *
      * @see initialze()
      * @return
-     * @throws CastException
      */
-    public static DataCastManager getInstance() throws CastException {
+    public static DataCastManager getInstance() {
         if (null == sInstance) {
-            LOGE(TAG, "No DataCastManager instance was initialized, you need to " +
-                    "call initialize() first");
-            throw new CastException();
+            throw new IllegalStateException(
+            		"No DataCastManager instance was initialized, you need to call initialize() first");
         }
         return sInstance;
     }
 
     /**
-     * Returns the initialized instance of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown. The {@link Context} that is passed as the argument will
+     * Returns the initialized instance of this class. If it is not initialized yet, an
+     * IllegalStateException will be thrown. The {@link Context} that is passed as the argument will
      * be used to update the context. The main purpose of updating context is to enable the library
      * to provide {@link Context} related functionalities, e.g. it can create an error dialog if
      * needed. This method is preferred over the similar one without a context argument.
@@ -151,13 +148,11 @@ public class DataCastManager extends BaseCastManager
      * @see {@link initialize()}, {@link setContext()}
      * @param ctx the current Context
      * @return
-     * @throws CastException
      */
-    public static DataCastManager getInstance(Context ctx) throws CastException {
+    public static DataCastManager getInstance(Context ctx) {
         if (null == sInstance) {
-            LOGE(TAG, "No DataCastManager instance was initialized, you need to " +
-                    "call initialize() first");
-            throw new CastException();
+        	throw new IllegalStateException(
+            		"No DataCastManager instance was initialized, you need to call initialize() first");
         }
         LOGD(TAG, "Updated context to: " + ctx.getClass().getName());
         sInstance.mContext = ctx;

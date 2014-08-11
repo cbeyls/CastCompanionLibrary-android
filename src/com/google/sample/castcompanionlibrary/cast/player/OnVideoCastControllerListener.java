@@ -19,7 +19,6 @@ package com.google.sample.castcompanionlibrary.cast.player;
 import android.view.View;
 import android.widget.SeekBar;
 
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 
@@ -54,9 +53,8 @@ public interface OnVideoCastControllerListener {
      * @param v
      * @throws TransientNetworkDisconnectionException
      * @throws NoConnectionException
-     * @throws CastException
      */
-    public void onPlayPauseClicked(View v) throws CastException,
+    public void onPlayPauseClicked(View v) throws
             TransientNetworkDisconnectionException, NoConnectionException;
 
 }

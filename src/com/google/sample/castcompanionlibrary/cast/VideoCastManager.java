@@ -157,8 +157,8 @@ public class VideoCastManager extends BaseCastManager
      * Initializes the VideoCastManager for clients. Before clients can use VideoCastManager, they
      * need to initialize it by calling this static method. Then clients can obtain an instance of
      * this singleton class by calling {@link getInstance()} or {@link getInstance(Context)}.
-     * Failing to initialize this class before requesting an instance will result in a
-     * {@link CastException} exception.
+     * Failing to initialize this class before requesting an instance will result in an
+     * IllegalStateException exception.
      *
      * @param context
      * @param applicationId the unique ID for your application
@@ -192,24 +192,22 @@ public class VideoCastManager extends BaseCastManager
     }
 
     /**
-     * Returns the initialized instances of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown.
+     * Returns the initialized instances of this class. If it is not initialized yet, an
+     * IllegalStateException will be thrown.
      *
      * @return
-     * @throws CastException
      * @see initialize()
      */
-    public static VideoCastManager getInstance() throws CastException {
+    public static VideoCastManager getInstance() {
         if (null == sInstance) {
-            LOGE(TAG, "No VideoCastManager instance was built, you need to build one first");
-            throw new CastException();
+            throw new IllegalStateException("No VideoCastManager instance was built, you need to build one first");
         }
         return sInstance;
     }
 
     /**
-     * Returns the initialized instances of this class. If it is not initialized yet, a
-     * {@link CastException} will be thrown. The {@link Context} that is passed as the argument
+     * Returns the initialized instances of this class. If it is not initialized yet, an
+     * IllegalStateException will be thrown. The {@link Context} that is passed as the argument
      * will be used to update the context for the <code>VideoCastManager</code> instance. The main
      * purpose of updating context is to enable the library to provide {@link Context} related
      * functionalities, e.g. it can create an error dialog if needed. This method is preferred over
@@ -217,14 +215,11 @@ public class VideoCastManager extends BaseCastManager
      *
      * @param context the current Context
      * @return
-     * @throws CastException
      * @see {@link initialize()}, {@link setContext()}
      */
-    public static VideoCastManager getInstance(Context context) throws CastException {
+    public static VideoCastManager getInstance(Context context) {
         if (null == sInstance) {
-            LOGE(TAG, "No VideoCastManager instance was built, you need to build one first "
-                    + "(called from Context: " + context + ")");
-            throw new CastException();
+        	throw new IllegalStateException("No VideoCastManager instance was built, you need to build one first");
         }
         LOGD(TAG, "Updated context to: " + context);
         sInstance.mContext = context;
@@ -241,12 +236,6 @@ public class VideoCastManager extends BaseCastManager
             targetActivity = VideoCastControllerActivity.class;
         }
         mTargetActivity = targetActivity;
-        Utils.saveStringToPreference(mContext, PREFS_KEY_CAST_ACTIVITY_NAME,
-                mTargetActivity.getName());
-        if (null != mDataNamespace) {
-            Utils.saveStringToPreference(mContext, PREFS_KEY_CAST_CUSTOM_DATA_NAMESPACE,
-                    dataNamespace);
-        }
 
         mMiniControllers = new HashSet<IMiniController>();
 
@@ -367,10 +356,9 @@ public class VideoCastManager extends BaseCastManager
      * OnMiniControllerChangedListener#onPlayPauseClicked()
      * @throws TransientNetworkDisconnectionException
      * @throws NoConnectionException
-     * @throws CastException
      */
     @Override
-    public void onPlayPauseClicked() throws CastException,
+    public void onPlayPauseClicked() throws
             TransientNetworkDisconnectionException, NoConnectionException {
         checkConnectivity();
         if (mState == MediaStatus.PLAYER_STATE_PLAYING) {
@@ -1143,11 +1131,10 @@ public class VideoCastManager extends BaseCastManager
     /**
      * Resumes the playback from where it was left (can be the beginning).
      *
-     * @throws CastException
      * @throws NoConnectionException
      * @throws TransientNetworkDisconnectionException
      */
-    public void play() throws CastException, TransientNetworkDisconnectionException,
+    public void play() throws TransientNetworkDisconnectionException,
             NoConnectionException {
         play(null);
     }
@@ -1184,24 +1171,22 @@ public class VideoCastManager extends BaseCastManager
     /**
      * Stops the playback of media/stream
      *
-     * @throws CastException
      * @throws TransientNetworkDisconnectionException
      * @throws NoConnectionException
      */
-    public void stop() throws CastException,
-            TransientNetworkDisconnectionException, NoConnectionException {
+    public void stop() throws
+    		TransientNetworkDisconnectionException, NoConnectionException {
         stop(null);
     }
 
     /**
      * Pauses the playback.
      *
-     * @throws CastException
      * @throws NoConnectionException
      * @throws TransientNetworkDisconnectionException
      */
-    public void pause() throws CastException, TransientNetworkDisconnectionException,
-            NoConnectionException {
+    public void pause() throws
+    		TransientNetworkDisconnectionException, NoConnectionException {
         pause(null);
     }
 
@@ -1270,7 +1255,6 @@ public class VideoCastManager extends BaseCastManager
      * @param position in milliseconds
      * @throws NoConnectionException
      * @throws TransientNetworkDisconnectionException
-     * @throws CastException
      */
     public void seekAndPlay(int position) throws TransientNetworkDisconnectionException,
             NoConnectionException {
@@ -1299,11 +1283,10 @@ public class VideoCastManager extends BaseCastManager
     /**
      * Toggles the playback of the movie.
      *
-     * @throws CastException
      * @throws NoConnectionException
      * @throws TransientNetworkDisconnectionException
      */
-    public void togglePlayback() throws CastException, TransientNetworkDisconnectionException,
+    public void togglePlayback() throws TransientNetworkDisconnectionException,
             NoConnectionException {
         checkConnectivity();
         boolean isPlaying = isRemoteMoviePlaying();
@@ -1524,7 +1507,6 @@ public class VideoCastManager extends BaseCastManager
                 Cast.CastApi.removeMessageReceivedCallbacks(mApiClient, mDataNamespace);
             }
             mDataChannel = null;
-            Utils.saveStringToPreference(mContext, PREFS_KEY_CAST_CUSTOM_DATA_NAMESPACE, null);
             return true;
         } catch (Exception e) {
             LOGE(TAG, "Failed to remove namespace: " + mDataNamespace, e);

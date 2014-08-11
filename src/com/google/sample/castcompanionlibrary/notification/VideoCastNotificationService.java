@@ -63,18 +63,33 @@ public class VideoCastNotificationService extends Service {
     private static int NOTIFICATION_ID = 1;
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
-    private String mApplicationId;
     private ImageLoader.Request mVideoArtRequest;
     private boolean mIsPlaying;
     private Class<?> mTargetActivity;
-    private String mDataNamespace;
     private int mStatus;
     private Notification mNotification;
     private boolean mVisible;
-    private static final boolean ICS_OR_ABOVE = Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
-    private BroadcastReceiver mBroadcastReceiver;
     private VideoCastManager mCastManager;
-    private VideoCastConsumerImpl mConsumer;
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            LOGD(TAG, "onReceive(): " + intent.getAction());
+        }
+    };
+    private final VideoCastConsumerImpl mConsumer = new VideoCastConsumerImpl() {
+        @Override
+        public void onApplicationDisconnected(int errorCode) {
+            LOGD(TAG, "onApplicationDisconnected() was reached");
+            stopSelf();
+        }
+
+        @Override
+        public void onRemoteMediaPlayerStatusUpdated() {
+            int mediaStatus = mCastManager.getPlaybackStatus();
+            VideoCastNotificationService.this.onRemoteMediaPlayerStatusUpdated(mediaStatus);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -82,36 +97,14 @@ public class VideoCastNotificationService extends Service {
         LOGD(TAG, "onCreate()");
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
-        mBroadcastReceiver = new BroadcastReceiver() {
-
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                LOGD(TAG, "onReceive(): " + intent.getAction());
-            }
-        };
-
         registerReceiver(mBroadcastReceiver, filter);
 
-        readPersistedData();
-        mCastManager = VideoCastManager
-                .initialize(this, mApplicationId, mTargetActivity, mDataNamespace, null);
+        mCastManager = VideoCastManager.getInstance();
+        mTargetActivity = mCastManager.getTargetActivity();
         if (!mCastManager.isConnected()) {
             mCastManager.reconnectSessionIfPossible(this, false);
         }
-        mConsumer = new VideoCastConsumerImpl() {
-            @Override
-            public void onApplicationDisconnected(int errorCode) {
-                LOGD(TAG, "onApplicationDisconnected() was reached");
-                stopSelf();
-            }
 
-            @Override
-            public void onRemoteMediaPlayerStatusUpdated() {
-                int mediaStatus = mCastManager.getPlaybackStatus();
-                VideoCastNotificationService.this.onRemoteMediaPlayerStatusUpdated(mediaStatus);
-            }
-
-        };
         mCastManager.addVideoCastConsumer(mConsumer);
     }
 
@@ -123,31 +116,15 @@ public class VideoCastNotificationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         LOGD(TAG, "onStartCommand");
-        if (null != intent) {
-
-            String action = intent.getAction();
-            if (ACTION_TOGGLE_PLAYBACK.equals(action) && ICS_OR_ABOVE) {
-                LOGD(TAG, "onStartCommand(): Action: ACTION_TOGGLE_PLAYBACK");
-                togglePlayback();
-            } else if (ACTION_STOP.equals(action) && ICS_OR_ABOVE) {
-                LOGD(TAG, "onStartCommand(): Action: ACTION_STOP");
-                stopApplication();
-            } else if (ACTION_VISIBILITY.equals(action)) {
-                mVisible = intent.getBooleanExtra("visible", false);
-                LOGD(TAG, "onStartCommand(): Action: ACTION_VISIBILITY " + mVisible);
-                if (mVisible && null != mNotification) {
-                    startForeground(NOTIFICATION_ID, mNotification);
-                } else {
-                    stopForeground(true);
-                }
+        if ((intent != null) && ACTION_VISIBILITY.equals(intent.getAction())) {
+            mVisible = intent.getBooleanExtra("visible", false);
+            LOGD(TAG, "onStartCommand(): Action: ACTION_VISIBILITY " + mVisible);
+            if (mVisible && null != mNotification) {
+                startForeground(NOTIFICATION_ID, mNotification);
             } else {
-                LOGD(TAG, "onStartCommand(): Action: none");
+                stopForeground(true);
             }
-
-        } else {
-            LOGD(TAG, "onStartCommand(): Intent was null");
         }
-
         return Service.START_REDELIVER_INTENT;
     }
 
@@ -217,12 +194,8 @@ public class VideoCastNotificationService extends Service {
         mVideoArtRequest = null;
         LOGD(TAG, "onDestroy was called");
         removeNotification();
-        if (null != mBroadcastReceiver) {
-            unregisterReceiver(mBroadcastReceiver);
-        }
-        if (null != mConsumer) {
-            mCastManager.removeVideoCastConsumer(mConsumer);
-        }
+        unregisterReceiver(mBroadcastReceiver);
+        mCastManager.removeVideoCastConsumer(mConsumer);
     }
 
     /*
@@ -232,19 +205,15 @@ public class VideoCastNotificationService extends Service {
     private void build(MediaInfo info, Bitmap bitmap, boolean isPlaying,
             Class<?> targetActivity) {
         Bundle mediaWrapper = Utils.fromMediaInfo(info);
-        Intent contentIntent = null;
         if (null == mTargetActivity) {
             mTargetActivity = VideoCastControllerActivity.class;
         }
-        contentIntent = new Intent(this, mTargetActivity);
-
+        Intent contentIntent = new Intent(this, mTargetActivity);
         contentIntent.putExtra("media", mediaWrapper);
 
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-
-        stackBuilder.addParentStack(mTargetActivity);
-
-        stackBuilder.addNextIntent(contentIntent);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this)
+        		.addParentStack(mTargetActivity)
+        		.addNextIntent(contentIntent);
         if (stackBuilder.getIntentCount() > 1) {
             stackBuilder.editIntentAt(1).putExtra("media", mediaWrapper);
         }
@@ -256,7 +225,7 @@ public class VideoCastNotificationService extends Service {
         MediaMetadata mm = info.getMetadata();
 
         RemoteViews rv = new RemoteViews(getPackageName(), R.layout.custom_notification);
-        if (ICS_OR_ABOVE) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             addPendingIntents(rv, isPlaying, info);
         }
         if (null != bitmap) {
@@ -280,13 +249,10 @@ public class VideoCastNotificationService extends Service {
     }
 
     private void addPendingIntents(RemoteViews rv, boolean isPlaying, MediaInfo info) {
-        Intent playbackIntent = new Intent(ACTION_TOGGLE_PLAYBACK);
-        playbackIntent.setPackage(getPackageName());
-        PendingIntent playbackPendingIntent = PendingIntent
-                .getBroadcast(this, 0, playbackIntent, 0);
+        Intent playbackIntent = new Intent(ACTION_TOGGLE_PLAYBACK).setPackage(getPackageName());
+        PendingIntent playbackPendingIntent = PendingIntent.getBroadcast(this, 0, playbackIntent, 0);
 
-        Intent stopIntent = new Intent(ACTION_STOP);
-        stopIntent.setPackage(getPackageName());
+        Intent stopIntent = new Intent(ACTION_STOP).setPackage(getPackageName());
         PendingIntent stopPendingIntent = PendingIntent.getBroadcast(this, 0, stopIntent, 0);
 
         rv.setOnClickPendingIntent(R.id.playPauseView, playbackPendingIntent);
@@ -294,59 +260,11 @@ public class VideoCastNotificationService extends Service {
 
         int playPauseImageResId;
         if (isPlaying) {
-            if (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE) {
-            	playPauseImageResId = R.drawable.ic_av_stop_sm_dark;
-            } else {
-            	playPauseImageResId = R.drawable.ic_av_pause_sm_dark;
-            }
-
+        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
+        			? R.drawable.ic_av_stop_sm_dark : R.drawable.ic_av_pause_sm_dark;
         } else {
         	playPauseImageResId = R.drawable.ic_av_play_sm_dark;
         }
         rv.setImageViewResource(R.id.playPauseView, playPauseImageResId);
-    }
-
-    private void togglePlayback() {
-        try {
-            mCastManager.togglePlayback();
-        } catch (Exception e) {
-            LOGE(TAG, "Failed to toggle the playback", e);
-        }
-    }
-
-    /*
-     * We try to disconnect application but even if that fails, we need to remove notification since
-     * that is the only way to get rid of it without going to the application
-     */
-    private void stopApplication() {
-        try {
-            LOGD(TAG, "Calling stopApplication");
-            mCastManager.disconnect();
-        } catch (Exception e) {
-            LOGE(TAG, "Failed to disconnect application", e);
-        }
-        stopSelf();
-    }
-
-    /*
-     * Reads application ID and target activity from preference storage.
-     */
-    private void readPersistedData() {
-        mApplicationId = Utils.getStringFromPreference(
-                this, VideoCastManager.PREFS_KEY_APPLICATION_ID);
-        String targetName = Utils.getStringFromPreference(
-                this, VideoCastManager.PREFS_KEY_CAST_ACTIVITY_NAME);
-        mDataNamespace = Utils.getStringFromPreference(
-                this, VideoCastManager.PREFS_KEY_CAST_CUSTOM_DATA_NAMESPACE);
-        try {
-            if (null != targetName) {
-                mTargetActivity = Class.forName(targetName);
-            } else {
-                mTargetActivity = VideoCastControllerActivity.class;
-            }
-
-        } catch (ClassNotFoundException e) {
-            LOGE(TAG, "Failed to find the targetActivity class", e);
-        }
     }
 }

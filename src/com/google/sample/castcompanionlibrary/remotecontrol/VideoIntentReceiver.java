@@ -20,7 +20,6 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.exceptions.CastException;
 import com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 
@@ -39,45 +38,22 @@ public class VideoIntentReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        VideoCastManager castMgr = null;
-        try {
-            castMgr = VideoCastManager.getInstance();
-        } catch (CastException e1) {
-            LOGE(TAG, "onReceive(): No CastManager instance exists");
-        }
+        VideoCastManager castMgr = VideoCastManager.getInstance();
         String action = intent.getAction();
         if (null == action) {
             return;
         }
         if (action.equals(VideoCastNotificationService.ACTION_TOGGLE_PLAYBACK)) {
             try {
-                if (null != castMgr) {
-                    LOGD(TAG, "Toggling playback via CastManager");
-                    castMgr.togglePlayback();
-                } else {
-                    LOGD(TAG, "Toggling playback via NotificationService");
-                    startService(context, VideoCastNotificationService.ACTION_TOGGLE_PLAYBACK);
-                }
-
+                LOGD(TAG, "Toggling playback via CastManager");
+                castMgr.togglePlayback();
             } catch (Exception e) {
                 LOGE(TAG, "onReceive(): Failed to toggle playback", e);
-                startService(context, VideoCastNotificationService.ACTION_TOGGLE_PLAYBACK);
             }
         } else if (action.equals(VideoCastNotificationService.ACTION_STOP)) {
-
-            try {
-                if (null != castMgr) {
-                    LOGD(TAG, "Calling stopApplication from intent");
-                    castMgr.disconnect();
-                } else {
-                    startService(context, VideoCastNotificationService.ACTION_STOP);
-                }
-            } catch (Exception e) {
-                LOGE(TAG, "onReceive(): Failed to stop application", e);
-                startService(context, VideoCastNotificationService.ACTION_STOP);
-            }
+            LOGD(TAG, "Calling stopApplication from intent");
+            castMgr.disconnect();
         } else if (action.equals(Intent.ACTION_MEDIA_BUTTON)) {
-
             KeyEvent keyEvent = (KeyEvent) intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
             if (keyEvent.getAction() != KeyEvent.ACTION_DOWN) {
                 return;
@@ -94,11 +70,4 @@ public class VideoIntentReceiver extends BroadcastReceiver {
             }
         }
     }
-
-    private void startService(Context context, String action) {
-        Intent serviceIntent = new Intent(action);
-        serviceIntent.setPackage(context.getPackageName());
-        context.startService(serviceIntent);
-    }
-
 }
