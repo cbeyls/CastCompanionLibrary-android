@@ -103,7 +103,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     protected Handler mHandler;
     protected ReconnectionStatus mReconnectionStatus = ReconnectionStatus.INACTIVE;
     protected int mVisibilityCounter;
-    protected boolean mUiVisible;
     protected GoogleApiClient mApiClient;
     protected AsyncTask<Void, Integer, Integer> mReconnectionTask;
     protected int mCapabilities;
@@ -363,15 +362,9 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      * the {@link onUiVisibilityChanged()} method is called.
      */
     public void incrementUiCounter() {
-        mVisibilityCounter++;
-        if (!mUiVisible) {
-            mUiVisible = true;
-            onUiVisibilityChanged(true);
-        }
-        if (mVisibilityCounter == 0) {
-            LOGD(TAG, "UI is no longer visible");
-        } else {
-            LOGD(TAG, "UI is visible");
+        if (++mVisibilityCounter == 1) {
+        	LOGD(TAG, "UI is visible");
+        	onUiVisibilityChanged(true);
         }
     }
 
@@ -384,13 +377,16 @@ public void onCastAvailabilityChanged(boolean castPresent) {
     public void decrementUiCounter() {
         if (--mVisibilityCounter == 0) {
             LOGD(TAG, "UI is no longer visible");
-            if (mUiVisible) {
-                mUiVisible = false;
-                onUiVisibilityChanged(false);
-            }
-        } else {
-            LOGD(TAG, "UI is visible");
+            onUiVisibilityChanged(false);
         }
+    }
+
+    /**
+     * 
+     * @return true if the UI is currently visible
+     */
+    public boolean isUiVisible() {
+    	return mVisibilityCounter > 0; 
     }
 
     /**
