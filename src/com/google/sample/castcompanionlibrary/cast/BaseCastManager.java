@@ -187,7 +187,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     public void onWifiConnectivityChanged(boolean connected) {
         LOGD(TAG, "WIFI connectivity changed to " + (connected ? "enabled" : "disabled"));
         if (connected && !mWifiConnectivity) {
-            mWifiConnectivity = true;
             mHandler.postDelayed(new Runnable() {
 
                 @Override
@@ -196,9 +195,8 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
                 }
             }, 1000);
 
-        } else {
-            mWifiConnectivity = connected;
         }
+        mWifiConnectivity = connected;
     }
 
     public static BaseCastManager getCastManager() {
@@ -419,13 +417,6 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public static boolean checkGooglePlayServices(final Activity activity) {
         return Utils.checkGooglePlayServices(activity);
-    }
-
-    /**
-     * @deprecated Use <code>checkGooglePlayServices</code>
-     */
-    public static boolean checkGooglePlaySevices(final Activity activity) {
-        return checkGooglePlayServices(activity);
     }
 
     /**
