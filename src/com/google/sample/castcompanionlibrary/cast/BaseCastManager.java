@@ -397,7 +397,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
     protected void onUiVisibilityChanged(boolean visible) {
         if (visible) {
         	mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-        			MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+        			MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
         } else {
             mMediaRouter.removeCallback(mMediaRouterCallback);
         }
