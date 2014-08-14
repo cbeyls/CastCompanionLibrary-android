@@ -90,6 +90,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
 
     private static final String TAG = LogUtils.makeLogTag(BaseCastManager.class);
     private static final int SESSION_RECOVERY_TIMEOUT = 5; // in seconds
+    private static final long UI_INVISIBLE_DELAY_MS = 300L;
 
     protected Context mContext;
     protected final MediaRouter mMediaRouter;
@@ -100,9 +101,10 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     private final Set<IBaseCastConsumer> mBaseCastConsumers = new HashSet<IBaseCastConsumer>();
     private boolean mDestroyOnDisconnect = false;
     protected String mApplicationId;
-    protected Handler mHandler;
+    private Handler mHandler;
     protected ReconnectionStatus mReconnectionStatus = ReconnectionStatus.INACTIVE;
     protected int mVisibilityCounter;
+    protected boolean mUiVisible;
     protected GoogleApiClient mApiClient;
     protected AsyncTask<Void, Integer, Integer> mReconnectionTask;
     protected int mCapabilities;
@@ -361,8 +363,11 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public void incrementUiCounter() {
         if (++mVisibilityCounter == 1) {
-        	LOGD(TAG, "UI is visible");
-        	onUiVisibilityChanged(true);
+        	if (mUiVisible) {
+        		mHandler.removeCallbacks(mUiInvisibleRunnable);
+        	} else {
+        		onUiVisibilityChanged(true);
+        	}
         }
     }
 
@@ -374,8 +379,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public void decrementUiCounter() {
         if (--mVisibilityCounter == 0) {
-            LOGD(TAG, "UI is no longer visible");
-            onUiVisibilityChanged(false);
+        	mHandler.postDelayed(mUiInvisibleRunnable, UI_INVISIBLE_DELAY_MS);
         }
     }
 
@@ -384,8 +388,15 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      * @return true if the UI is currently visible
      */
     public boolean isUiVisible() {
-    	return mVisibilityCounter > 0; 
+    	return mUiVisible;
     }
+
+    private final Runnable mUiInvisibleRunnable = new Runnable() {
+		@Override
+		public void run() {
+            onUiVisibilityChanged(false);
+		}
+    };
 
     /**
      * This is called when UI visibility of the client has changed
@@ -393,10 +404,13 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      * @param visible The updated visibility status
      */
     protected void onUiVisibilityChanged(boolean visible) {
+    	mUiVisible = visible;
         if (visible) {
+        	LOGD(TAG, "UI is visible");
         	mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
         			MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
         } else {
+            LOGD(TAG, "UI is no longer visible");
             mMediaRouter.removeCallback(mMediaRouterCallback);
         }
     }
