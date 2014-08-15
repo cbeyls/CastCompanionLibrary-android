@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import com.google.android.gms.cast.MediaInfo;
@@ -62,7 +63,6 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
     private ImageLoader.Request mVideoArtRequest;
-    private boolean mIsPlaying;
     private Class<?> mTargetActivity;
     private int mStatus;
     private Notification mNotification;
@@ -141,7 +141,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
     		@Override
     		public void onResponse(Bitmap bitmap) {
     			try {
-    				build(info, bitmap, mIsPlaying, mTargetActivity);
+    				build(info, bitmap);
                     if (mVisible) {
                         startForeground(NOTIFICATION_ID, mNotification);
                     }
@@ -162,7 +162,6 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 
     private void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
         mStatus = mediaStatus;
-        mIsPlaying = mediaStatus == MediaStatus.PLAYER_STATE_PLAYING;
         LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached with status: " + mStatus);
         try {
             switch (mediaStatus) {
@@ -207,8 +206,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
      * Build the notification. We also need to add the appropriate "back stack"
      * so when user goes into the CastPlayerActivity, she can have a meaningful "back" experience.
      */
-    private void build(MediaInfo info, Bitmap bitmap, boolean isPlaying,
-            Class<?> targetActivity) {
+    private void build(MediaInfo info, Bitmap bitmap) {
         Bundle mediaWrapper = Utils.fromMediaInfo(info);
         if (null == mTargetActivity) {
             mTargetActivity = VideoCastControllerActivity.class;
@@ -231,7 +229,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 
         RemoteViews rv = new RemoteViews(getPackageName(), R.layout.custom_notification);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            addPendingIntents(rv, isPlaying, info);
+            addPendingIntents(rv, info);
         }
         if (null != bitmap) {
             rv.setImageViewBitmap(R.id.iconView, bitmap);
@@ -253,7 +251,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
         mNotification.contentView = rv;
     }
 
-    private void addPendingIntents(RemoteViews rv, boolean isPlaying, MediaInfo info) {
+    private void addPendingIntents(RemoteViews rv, MediaInfo info) {
         Intent playbackIntent = new Intent(ACTION_TOGGLE_PLAYBACK).setPackage(getPackageName());
         PendingIntent playbackPendingIntent = PendingIntent.getBroadcast(this, 0, playbackIntent, 0);
 
@@ -263,13 +261,18 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
         rv.setOnClickPendingIntent(R.id.playPauseView, playbackPendingIntent);
         rv.setOnClickPendingIntent(R.id.removeView, stopPendingIntent);
 
-        int playPauseImageResId;
-        if (isPlaying) {
-        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
-        			? R.drawable.ic_av_stop_sm_dark : R.drawable.ic_av_pause_sm_dark;
+        if (mStatus == MediaStatus.PLAYER_STATE_BUFFERING) {
+        	rv.setViewVisibility(R.id.loadingView, View.VISIBLE);
+        	rv.setViewVisibility(R.id.playPauseView, View.GONE);
         } else {
-        	playPauseImageResId = R.drawable.ic_av_play_sm_dark;
+	        int playPauseImageResId;
+	        if (mStatus == MediaStatus.PLAYER_STATE_PLAYING) {
+	        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
+	        			? R.drawable.ic_av_stop_sm_dark : R.drawable.ic_av_pause_sm_dark;
+	        } else {
+	        	playPauseImageResId = R.drawable.ic_av_play_sm_dark;
+	        }
+	        rv.setImageViewResource(R.id.playPauseView, playPauseImageResId);
         }
-        rv.setImageViewResource(R.id.playPauseView, playPauseImageResId);
     }
 }
