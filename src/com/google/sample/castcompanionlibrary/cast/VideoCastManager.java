@@ -20,9 +20,8 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.json.JSONObject;
 
@@ -129,7 +128,7 @@ public class VideoCastManager extends BaseCastManager
     private static final String TAG = LogUtils.makeLogTag(VideoCastManager.class);
     private static VideoCastManager sInstance;
     private final Class<?> mTargetActivity;
-    private final Set<IMiniController> mMiniControllers;
+    private final List<IMiniController> mMiniControllers;
     private Bitmap mMiniControllersIcon;
     private ImageLoader.Request mMiniControllersIconRequest;
     private final AudioManager mAudioManager;
@@ -144,7 +143,7 @@ public class VideoCastManager extends BaseCastManager
     private final ComponentName mMediaButtonReceiverComponent;
     private final String mDataNamespace;
     private Cast.MessageReceivedCallback mDataChannel;
-    private Set<IVideoCastConsumer> mVideoConsumers;
+    private final List<IVideoCastConsumer> mVideoConsumers;
     private final ImageLoader mImageLoader;
 
     /**
@@ -224,14 +223,14 @@ public class VideoCastManager extends BaseCastManager
             String dataNamespace, ImageLoader imageLoader) {
         super(context, applicationId);
         LOGD(TAG, "VideoCastManager is instantiated");
-        mVideoConsumers = new HashSet<IVideoCastConsumer>();
+        mVideoConsumers = new ArrayList<IVideoCastConsumer>();
         mDataNamespace = dataNamespace;
         if (null == targetActivity) {
             targetActivity = VideoCastControllerActivity.class;
         }
         mTargetActivity = targetActivity;
 
-        mMiniControllers = new HashSet<IMiniController>();
+        mMiniControllers = new ArrayList<IMiniController>();
 
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mMediaButtonReceiverComponent = new ComponentName(context, VideoIntentReceiver.class);
@@ -1797,7 +1796,6 @@ public class VideoCastManager extends BaseCastManager
         if (null != listener) {
             super.addBaseCastConsumer(listener);
             mVideoConsumers.add(listener);
-            LOGD(TAG, "Successfully added the new CastConsumer listener " + listener);
         }
     }
 
@@ -1828,26 +1826,19 @@ public class VideoCastManager extends BaseCastManager
     public void addMiniController(IMiniController miniController,
             OnMiniControllerChangedListener onChangedListener) {
         if (null != miniController) {
-            if (mMiniControllers.add(miniController)) {
-                miniController.setOnMiniControllerChangedListener(null == onChangedListener ? this
-                        : onChangedListener);
-                MediaInfo mediaInfo = (mRemoteMediaPlayer == null) ? null
-                		: mRemoteMediaPlayer.getMediaInfo();
-            	if (mMiniControllers.size() == 1) {
-            		loadMiniControllersIcon(mediaInfo);
-            	}
-            	boolean isVisible = isConnected() && (mState == MediaStatus.PLAYER_STATE_PAUSED)
-            			|| (mState == MediaStatus.PLAYER_STATE_BUFFERING)
-                        || (mState == MediaStatus.PLAYER_STATE_PLAYING);
-            	miniController.setVisibility(isVisible);
-                if (isVisible) {
-                    updateMiniController(miniController, mediaInfo);
-                	miniController.setPlaybackStatus(mState, mIdleReason);
-                }
-                LOGD(TAG, "Successfully added the new MiniController " + miniController);
-            } else {
-                LOGD(TAG, "Attempting to adding " + miniController + " but it was already " +
-                        "registered, skipping this step");
+            mMiniControllers.add(miniController);
+            miniController.setOnMiniControllerChangedListener(null == onChangedListener ? this : onChangedListener);
+            MediaInfo mediaInfo = (mRemoteMediaPlayer == null) ? null : mRemoteMediaPlayer.getMediaInfo();
+        	if (mMiniControllers.size() == 1) {
+        		loadMiniControllersIcon(mediaInfo);
+        	}
+        	boolean isVisible = isConnected() && (mState == MediaStatus.PLAYER_STATE_PAUSED)
+        			|| (mState == MediaStatus.PLAYER_STATE_BUFFERING)
+                    || (mState == MediaStatus.PLAYER_STATE_PLAYING);
+        	miniController.setVisibility(isVisible);
+            if (isVisible) {
+                updateMiniController(miniController, mediaInfo);
+            	miniController.setPlaybackStatus(mState, mIdleReason);
             }
         }
     }

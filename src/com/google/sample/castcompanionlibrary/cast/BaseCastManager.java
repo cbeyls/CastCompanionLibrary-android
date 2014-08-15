@@ -19,6 +19,10 @@ package com.google.sample.castcompanionlibrary.cast;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -59,11 +63,6 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDi
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 import com.google.sample.castcompanionlibrary.utils.Utils;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * An abstract class that manages connectivity to a cast device. Subclasses are expected to extend
  * the functionality of this class based on their purpose.
@@ -98,7 +97,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     protected final CastMediaRouterCallback mMediaRouterCallback;
     protected CastDevice mSelectedCastDevice;
     protected String mDeviceName;
-    private final Set<IBaseCastConsumer> mBaseCastConsumers = new HashSet<IBaseCastConsumer>();
+    private final List<IBaseCastConsumer> mBaseCastConsumers = new ArrayList<IBaseCastConsumer>();
     private boolean mDestroyOnDisconnect = false;
     protected String mApplicationId;
     private Handler mHandler;
@@ -1071,9 +1070,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public void addBaseCastConsumer(IBaseCastConsumer listener) {
         if (null != listener) {
-            if (mBaseCastConsumers.add(listener)) {
-                LOGD(TAG, "Successfully added the new BaseCastConsumer listener " + listener);
-            }
+            mBaseCastConsumers.add(listener);
         }
     }
 
@@ -1084,10 +1081,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      */
     public void removeBaseCastConsumer(IBaseCastConsumer listener) {
         if (null != listener) {
-            if (mBaseCastConsumers.remove(listener)) {
-                LOGD(TAG, "Successfully removed the existing BaseCastConsumer listener " +
-                        listener);
-            }
+            mBaseCastConsumers.remove(listener);
         }
     }
 

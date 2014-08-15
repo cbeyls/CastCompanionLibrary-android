@@ -19,6 +19,17 @@ package com.google.sample.castcompanionlibrary.cast;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import android.content.Context;
+import android.support.v7.app.MediaRouteDialogFactory;
+import android.support.v7.media.MediaRouter.RouteInfo;
+import android.text.TextUtils;
+
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.CastOptions.Builder;
@@ -33,16 +44,6 @@ import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionExcept
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 import com.google.sample.castcompanionlibrary.utils.Utils;
-
-import android.content.Context;
-import android.support.v7.app.MediaRouteDialogFactory;
-import android.support.v7.media.MediaRouter.RouteInfo;
-import android.text.TextUtils;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A concrete subclass of {@link BaseCastManager} that is suitable for data-centric applications
@@ -80,7 +81,7 @@ public class DataCastManager extends BaseCastManager
     private static final String TAG = LogUtils.makeLogTag(DataCastManager.class);
     private static DataCastManager sInstance;
     private final Set<String> mNamespaceList = new HashSet<String>();
-    private final Set<IDataCastConsumer> mDataConsumers;
+    private final List<IDataCastConsumer> mDataConsumers;
 
     /**
      * Initializes the DataCastManager for clients. Before clients can use DataCastManager, they
@@ -111,7 +112,7 @@ public class DataCastManager extends BaseCastManager
 
     protected DataCastManager(Context context, String applicationId, String... namespaces) {
         super(context, applicationId);
-        mDataConsumers = new HashSet<IDataCastConsumer>();
+        mDataConsumers = new ArrayList<IDataCastConsumer>();
         if (null != namespaces) {
             for (String namespace : namespaces) {
                 mNamespaceList.add(namespace);
@@ -512,12 +513,7 @@ public class DataCastManager extends BaseCastManager
     public void addDataCastConsumer(IDataCastConsumer listener) {
         if (null != listener) {
             super.addBaseCastConsumer(listener);
-            if (mDataConsumers.add(listener)) {
-                LOGD(TAG, "Successfully added the new DataCastConsumer listener " + listener);
-            } else {
-                LOGD(TAG, "Adding Listener " + listener + " was already registered, " +
-                        "skipping this step");
-            }
+            mDataConsumers.add(listener);
         }
     }
 
