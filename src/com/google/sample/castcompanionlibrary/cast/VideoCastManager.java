@@ -501,9 +501,8 @@ public class VideoCastManager extends BaseCastManager
                 }
                 return idleReason == MediaStatus.IDLE_REASON_CANCELED;
             default:
-                break;
+                return false;
         }
-        return false;
     }
 
     /*
@@ -786,20 +785,6 @@ public class VideoCastManager extends BaseCastManager
      */
     public Class<?> getTargetActivity() {
         return mTargetActivity;
-    }
-
-    /*
-     * This is called when ui visibility of the client has changed
-     */
-    @Override
-    protected void onUiVisibilityChanged(boolean visible) {
-        super.onUiVisibilityChanged(visible);
-        if (isFeatureEnabled(FEATURE_NOTIFICATION)) {
-            Intent intent = new Intent(VideoCastNotificationService.ACTION_VISIBILITY);
-            intent.setPackage(mContext.getPackageName());
-            intent.putExtra("visible", !visible);
-            mContext.startService(intent);
-        }
     }
 
     /*============================================================================================*/

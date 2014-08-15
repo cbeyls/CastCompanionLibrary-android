@@ -104,6 +104,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
     protected ReconnectionStatus mReconnectionStatus = ReconnectionStatus.INACTIVE;
     protected int mVisibilityCounter;
     protected boolean mUiVisible;
+    private List<UiVisibilityListener> mUiVisibilityListeners;
     protected GoogleApiClient mApiClient;
     protected AsyncTask<Void, Integer, Integer> mReconnectionTask;
     protected int mCapabilities;
@@ -390,6 +391,29 @@ public void onCastAvailabilityChanged(boolean castPresent) {
     	return mUiVisible;
     }
 
+    /**
+     * Interface for components to notify when the application UI becomes visible or hidden.
+     *
+     */
+    public interface UiVisibilityListener {
+    	void onUiVisibilityChanged(boolean visible);
+    }
+
+    public void addUiVisibilityListener(UiVisibilityListener listener) {
+    	if (mUiVisibilityListeners == null) {
+    		mUiVisibilityListeners = new ArrayList<UiVisibilityListener>();
+    	}
+    	mUiVisibilityListeners.add(listener);
+    }
+
+    public void removeUiVisibilityListener(UiVisibilityListener listener) {
+    	if (mUiVisibilityListeners != null) {
+    		if (mUiVisibilityListeners.remove(listener) && (mUiVisibilityListeners.size() == 0)) {
+    			mUiVisibilityListeners = null;
+    		}
+    	}
+    }
+
     private final Runnable mUiInvisibleRunnable = new Runnable() {
 		@Override
 		public void run() {
@@ -411,6 +435,12 @@ public void onCastAvailabilityChanged(boolean castPresent) {
         } else {
             LOGD(TAG, "UI is no longer visible");
             mMediaRouter.removeCallback(mMediaRouterCallback);
+        }
+        // Notify listeners, if any
+        if (mUiVisibilityListeners != null) {
+        	for (UiVisibilityListener listener : mUiVisibilityListeners) {
+        		listener.onUiVisibilityChanged(visible);
+        	}
         }
     }
 

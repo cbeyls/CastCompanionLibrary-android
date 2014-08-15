@@ -52,14 +52,12 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
  * area provides a play/pause toggle and an "x" button to disconnect but that for GB, we do not
  * show that due to the framework limitations.
  */
-public class VideoCastNotificationService extends Service {
+public class VideoCastNotificationService extends Service implements VideoCastManager.UiVisibilityListener {
 
     public static final String ACTION_TOGGLE_PLAYBACK =
             "com.google.sample.castcompanionlibrary.action.toggleplayback";
     public static final String ACTION_STOP =
             "com.google.sample.castcompanionlibrary.action.stop";
-    public static final String ACTION_VISIBILITY =
-            "com.google.sample.castcompanionlibrary.action.notificationvisibility";
     private static int NOTIFICATION_ID = 1;
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
@@ -105,7 +103,12 @@ public class VideoCastNotificationService extends Service {
             mCastManager.reconnectSessionIfPossible(this, false);
         }
 
+        mCastManager.addUiVisibilityListener(this);
+        mVisible = !mCastManager.isUiVisible();
+
         mCastManager.addVideoCastConsumer(mConsumer);
+        // Force build the notification if we are already playing
+        mConsumer.onRemoteMediaPlayerStatusUpdated();
     }
 
     @Override
@@ -115,18 +118,19 @@ public class VideoCastNotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        LOGD(TAG, "onStartCommand");
-        if ((intent != null) && ACTION_VISIBILITY.equals(intent.getAction())) {
-            mVisible = intent.getBooleanExtra("visible", false);
-            LOGD(TAG, "onStartCommand(): Action: ACTION_VISIBILITY " + mVisible);
-            if (mVisible && null != mNotification) {
-                startForeground(NOTIFICATION_ID, mNotification);
-            } else {
-                stopForeground(true);
-            }
-        }
         return Service.START_REDELIVER_INTENT;
     }
+
+	@Override
+	public void onUiVisibilityChanged(boolean visible) {
+		// Notification is visible when the UI is not
+		mVisible = !visible;
+		if (mVisible && null != mNotification) {
+            startForeground(NOTIFICATION_ID, mNotification);
+        } else {
+            stopForeground(true);
+        }
+	}
 
     private void setupNotification(final MediaInfo info) {
         if (null == info) {
@@ -196,6 +200,7 @@ public class VideoCastNotificationService extends Service {
         removeNotification();
         unregisterReceiver(mBroadcastReceiver);
         mCastManager.removeVideoCastConsumer(mConsumer);
+        mCastManager.removeUiVisibilityListener(this);
     }
 
     /*
