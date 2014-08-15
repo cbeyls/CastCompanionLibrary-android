@@ -18,7 +18,7 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
  * @author Christophe Beyls
  * 
  */
-public class CastActivity extends ActionBarActivity {
+public class VideoCastActivity extends ActionBarActivity {
 
 	public static final double DEFAULT_VOLUME_INCREMENT = 0.05;
 
@@ -27,8 +27,8 @@ public class CastActivity extends ActionBarActivity {
 	protected VideoCastManager mCastManager;
 
 	/**
-	 * Call this method on application startup to override the default volume increment in all
-	 * activities inheriting from this one.
+	 * Call this method on application startup to override the default volume increment in all activities inheriting
+	 * from this one.
 	 * 
 	 * @param volumeIncrement
 	 */
@@ -43,10 +43,10 @@ public class CastActivity extends ActionBarActivity {
 	}
 
 	/**
-	 * You can override this method to either add menu items in addition to the cast button (by
-	 * calling this implementation first) or provide your own replacement menu items (by not calling
-	 * this implementation). If you choose the second option, you must call yourself
-	 * mCastManager.addMediaRouterButton(menu, R.id.media_route_menu_item);
+	 * You can override this method to either add menu items in addition to the cast button (by calling this
+	 * implementation first) or provide your own replacement menu items (by not calling this implementation). If you
+	 * choose the second option, you must call yourself mCastManager.addMediaRouterButton(menu,
+	 * R.id.media_route_menu_item);
 	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -101,7 +101,8 @@ public class CastActivity extends ActionBarActivity {
 	}
 
 	private boolean onVolumeChange(double volumeIncrement, boolean isKeyDown) {
-		if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) && (mCastManager.isFeatureEnabled(BaseCastManager.FEATURE_LOCKSCREEN))
+		if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+				&& (mCastManager.isFeatureEnabled(BaseCastManager.FEATURE_LOCKSCREEN))
 				&& (mCastManager.getPlaybackStatus() == MediaStatus.PLAYER_STATE_PLAYING)) {
 			return false;
 		}

@@ -24,7 +24,7 @@ import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.sample.castcompanionlibrary.R;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.activities.CastActivity;
+import com.google.sample.castcompanionlibrary.cast.activities.VideoCastActivity;
 import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
 import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
 import com.google.sample.castcompanionlibrary.utils.Utils;
@@ -35,7 +35,7 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
  * @author Christophe Beyls
  * 
  */
-public class VideoCastControllerActivity extends CastActivity implements IVideoCastController {
+public class VideoCastControllerActivity extends VideoCastActivity implements IVideoCastController {
 
 	private static final String FRAGMENT_TAG = "task";
 	private View mPageView;
@@ -75,7 +75,8 @@ public class VideoCastControllerActivity extends CastActivity implements IVideoC
 		}
 
 		FragmentManager fm = getSupportFragmentManager();
-		VideoCastControllerFragment mediaAuthFragment = (VideoCastControllerFragment) fm.findFragmentByTag(FRAGMENT_TAG);
+		VideoCastControllerFragment mediaAuthFragment = (VideoCastControllerFragment) fm
+				.findFragmentByTag(FRAGMENT_TAG);
 
 		// if fragment is null, it means this is the first time, so create it
 		if (mediaAuthFragment == null) {

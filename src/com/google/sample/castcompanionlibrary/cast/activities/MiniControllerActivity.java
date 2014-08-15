@@ -1,7 +1,7 @@
 package com.google.sample.castcompanionlibrary.cast.activities;
 
 import com.google.sample.castcompanionlibrary.R;
-import com.google.sample.castcompanionlibrary.cast.activities.CastActivity;
+import com.google.sample.castcompanionlibrary.cast.activities.VideoCastActivity;
 import com.google.sample.castcompanionlibrary.widgets.IMiniController;
 
 /**
@@ -11,7 +11,7 @@ import com.google.sample.castcompanionlibrary.widgets.IMiniController;
  * @author Christophe Beyls
  * 
  */
-public class MiniControllerActivity extends CastActivity {
+public class MiniControllerActivity extends VideoCastActivity {
 
 	private IMiniController mMiniController;
 
