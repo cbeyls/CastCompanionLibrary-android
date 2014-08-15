@@ -171,7 +171,7 @@ public class VideoCastManager extends BaseCastManager
             LOGD(TAG, "New instance of VideoCastManager is created");
             if (ConnectionResult.SUCCESS != GooglePlayServicesUtil
                     .isGooglePlayServicesAvailable(context)) {
-                String msg = "Couldn't find the appropriate version of Goolge Play Services";
+                String msg = "Couldn't find the appropriate version of Google Play Services";
                 LOGE(TAG, msg);
             }
             sInstance = new VideoCastManager(context, applicationId, targetActivity, dataNamespace, imageLoader);
