@@ -265,6 +265,9 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
         	rv.setViewVisibility(R.id.loadingView, View.VISIBLE);
         	rv.setViewVisibility(R.id.playPauseView, View.GONE);
         } else {
+        	rv.setViewVisibility(R.id.loadingView, View.GONE);
+        	rv.setViewVisibility(R.id.playPauseView, View.VISIBLE);
+
 	        int playPauseImageResId;
 	        if (mStatus == MediaStatus.PLAYER_STATE_PLAYING) {
 	        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
