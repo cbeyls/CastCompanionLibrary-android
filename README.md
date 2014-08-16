@@ -1,6 +1,64 @@
 # CastCompanionLibrary-android
 
+This is a fork of the Cast Companion Library for Android by Google. It features fixed bugs, easier integration, improved performance, simpler code and cleaned up resources.
+
 CastCompanionLibrary-android is a library project to enable developers integrate Cast capabilities into their applications faster and easier.
+
+## IMPORTANT - Differences with the original library
+
+### Min SDK version
+This library is compatible with API level **9** and above (the original library mentions API level 10 and above).
+
+### Manifest declaration
+This library does not require any Intent filter declaration for the `VideoCastNotificationService`. This is a recap of what you must declare inside your manifest's `<application>` tag for video-centric applications:
+
+        <receiver android:name="com.google.sample.castcompanionlibrary.remotecontrol.VideoIntentReceiver" >
+            <intent-filter>
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+                <action android:name="android.media.VOLUME_CHANGED_ACTION" />
+                <action android:name="com.google.sample.castcompanionlibrary.action.toggleplayback" />
+                <action android:name="com.google.sample.castcompanionlibrary.action.stop" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="com.google.sample.castcompanionlibrary.notification.VideoCastNotificationService"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+### VideoCastManager initialization
+You **must** initialize `VideoCastManager` (or `DataCastManager`) by calling its static `initialize()` method in your `Application.onCreate()` callback.
+This is because the services and activities of this library expect the VideoCastManager to be already initialized when they start up.
+
+### ImageLoader
+This library provides a pluggable image loading system to load the videos artwork in all its components. The default implementation features a simple network queue and a small memory cache. You may provide your own implementation instead, in order to use your favourite image loader library. To do so, you need to implement the `com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader` interface. Read the interface documentation for more information.
+You can also find [an implementation using the image loader of the Volley library](https://gist.github.com/cbeyls/f35a75b59ac2dc4610b7).
+
+You then need to pass your implementation as a last parameter to the `VideoCastManager.initialize()` method to enable it.
+
+### VideoCastActivity
+This library provides a base class named `VideoCastActivity` that your activities may inherit from for an easier integration in video-centric applications. It takes cares of the following automatically:
+
+* Retrieving the VideoCastManager instance in a protected field named `mCastManager`.
+* Updating the context of the VideoCastManager.
+* Handling hardware volume keys to control the Cast device volume when connected to it.
+* Calling `incrementUiCounter()` and `decrementUiCounter()` so the library can keep track of the visibility of your application's UI and act accordingly (show or hide the notification, look for Cast devices).
+* *Optional*: populating the Action Bar with a Cast button and initializing it.
+
+### MiniControllerActivity
+This other base Activity provides the same features as `VideoCastActivity`, plus automatically registers and unregisters a MiniController. It requires that the layout of your Activity contains a MiniController widget with the id `R.id.mini_controller`.
+
+### Default volume increment step change
+The default volume increment when using the hardware volume keys in activities inheriting from `VideoCastActivity` (including the default Cast Controller Activity) is **5%** or 0.05. If you want to change it, you must call the static method `VideoCastActivity.setVolumeIncrement()`. For example, you can call it in `Application.onCreate()`.
+
+## Contributors for this version
+* Christophe Beyls
+
+If you use this version of the Cast Companion Library in your project, please link to this GitHub's project page and mention the author.
 
 ## Dependencies
 * google-play-services_lib library from the Android SDK (at least version 4.3)
