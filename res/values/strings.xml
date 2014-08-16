@@ -2,12 +2,9 @@
 <resources>
 
     <string name="app_name">Cast Companion Library</string>
-    <string name="ccl_version">1.8</string>
+    <string name="ccl_version">1.8B</string>
     <string name="media_route_menu_title">Play on&#8230;</string>
     <string name="live">Live</string>
-
-    <!-- Used in Error Dialog -->
-    <string name="ok">OK</string>
 
     <!-- Title of the Error Dialog -->
     <string name="error">Error</string>
@@ -31,7 +28,6 @@
     <string name="failed_to_play">Failed to start the playback of media</string>
     <string name="failed_to_stop">Failed to stop the playback of media</string>
     <string name="failed_to_pause">Failed to pause the playback of media</string>
-    <string name="failed_unknown">An unknown error was encountered</string>
 
     <!-- Failures -->
     <string name="failed_to_connect">Could not connect to the device</string>
@@ -44,6 +40,5 @@
     <string name="failed_load">Failed to load media on the cast device</string>
     <string name="failed_seek">Failed to seek to the new position on the cast device</string>
     <string name="failed_receiver_player_error">Receiver player has encountered a sever error</string>
-    <string name="failed_authorization_timeout">Authorization timed out</string>
 
 </resources>

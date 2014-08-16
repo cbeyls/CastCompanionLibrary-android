@@ -74,7 +74,7 @@ public class Utils {
     public static final void showErrorDialog(Context context, String message) {
         new AlertDialog.Builder(context).setTitle(R.string.error)
                 .setMessage(message)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
