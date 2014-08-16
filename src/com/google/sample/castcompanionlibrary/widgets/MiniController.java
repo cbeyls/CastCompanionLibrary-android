@@ -81,7 +81,7 @@ public class MiniController extends FrameLayout implements IMiniController {
 			@Override
 			public void onClick(View v) {
 				if (null != mListener) {
-					mPlayPause.setVisibility(View.INVISIBLE);
+					mPlayPause.setVisibility(View.GONE);
 					setLoadingVisibility(true);
 					try {
 						mListener.onPlayPauseClicked();
@@ -165,23 +165,23 @@ public class MiniController extends FrameLayout implements IMiniController {
 		case MediaStatus.PLAYER_STATE_IDLE:
 			switch (mStreamType) {
 			case MediaInfo.STREAM_TYPE_BUFFERED:
-				mPlayPause.setVisibility(View.INVISIBLE);
+				mPlayPause.setVisibility(View.GONE);
 				break;
 			case MediaInfo.STREAM_TYPE_LIVE:
 				if (idleReason == MediaStatus.IDLE_REASON_CANCELED) {
 					mPlayPause.setVisibility(View.VISIBLE);
 					mPlayPause.setImageDrawable(mPlayDrawable);
 				} else {
-					mPlayPause.setVisibility(View.INVISIBLE);
+					mPlayPause.setVisibility(View.GONE);
 				}
 				break;
 			}
 			break;
 		case MediaStatus.PLAYER_STATE_BUFFERING:
-			mPlayPause.setVisibility(View.INVISIBLE);
+			mPlayPause.setVisibility(View.GONE);
 			break;
 		default:
-			mPlayPause.setVisibility(View.INVISIBLE);
+			mPlayPause.setVisibility(View.GONE);
 			break;
 		}
 		setLoadingVisibility(state == MediaStatus.PLAYER_STATE_BUFFERING);
