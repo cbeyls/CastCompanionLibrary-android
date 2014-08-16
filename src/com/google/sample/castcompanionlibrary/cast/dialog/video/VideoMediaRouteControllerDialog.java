@@ -19,6 +19,7 @@ package com.google.sample.castcompanionlibrary.cast.dialog.video;
 import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -26,8 +27,8 @@ import android.support.v7.app.MediaRouteControllerDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaStatus;
@@ -40,118 +41,96 @@ import com.google.sample.castcompanionlibrary.cast.imageloader.ImageLoader;
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 
 /**
- * A custom {@link MediaRouteControllerDialog} that provides an album art, a play/pause button and
- * the ability to take user to the target activity when the album art is tapped.
+ * A custom {@link MediaRouteControllerDialog} that provides an album art, a play/pause button and the ability to take
+ * user to the target activity when the album art is tapped.
  */
 public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog {
 
-    private static final String TAG =
-            LogUtils.makeLogTag(VideoMediaRouteControllerDialog.class);
+	private static final String TAG = LogUtils.makeLogTag(VideoMediaRouteControllerDialog.class);
 
-    private ImageView mIcon;
-    private ImageView mPausePlay;
-    private TextView mTitle;
-    private TextView mSubTitle;
-    private TextView mEmptyText;
-    private ProgressBar mLoading;
-    private ImageLoader.Request mIconRequest;
-    private VideoCastManager mCastManager;
-    protected int mState;
-    private VideoCastConsumerImpl castConsumerImpl;
-    private Drawable mPauseDrawable;
-    private Drawable mPlayDrawable;
-    private Drawable mStopDrawable;
-    private View mIconContainer;
+	private ImageView mIcon;
+	private ImageView mPausePlay;
+	private View mTextContainer;
+	private TextView mTitle;
+	private TextView mSubTitle;
+	private TextView mEmptyText;
+	private View mLoading;
+	private ImageLoader.Request mIconRequest;
+	private final VideoCastManager mCastManager;
+	private final VideoCastConsumerImpl castConsumerImpl;
+	private final Drawable mPauseDrawable;
+	private final Drawable mPlayDrawable;
+	private final Drawable mStopDrawable;
 
-    private int mStreamType;
+	private int mStreamType;
 
-    public VideoMediaRouteControllerDialog(Context context, int theme) {
-        super(context, theme);
-    }
+	/**
+	 * Creates a new VideoMediaRouteControllerDialog in the given context.
+	 */
+	public VideoMediaRouteControllerDialog(Context context) {
+		super(context, R.style.CastDialog);
+		mCastManager = VideoCastManager.getInstance();
+		castConsumerImpl = new VideoCastConsumerImpl() {
 
-    @Override
-    protected void onStop() {
-        if (null != mCastManager) {
-            mCastManager.removeVideoCastConsumer(castConsumerImpl);
-        }
-        super.onStop();
-    }
+			@Override
+			public void onRemoteMediaPlayerStatusUpdated() {
+				updatePlayPauseState();
+			}
 
-    /**
-     * Creates a new VideoMediaRouteControllerDialog in the given context.
-     */
-    public VideoMediaRouteControllerDialog(Context context) {
-        super(context, R.style.CastDialog);
-        try {
-            mCastManager = VideoCastManager.getInstance();
-            mState = mCastManager.getPlaybackStatus();
-            castConsumerImpl = new VideoCastConsumerImpl() {
+			/*
+			 * (non-Javadoc)
+			 * 
+			 * @see com.google.sample.castcompanionlibrary.cast.VideoCastConsumerImpl #onMediaChannelMetadataUpdated()
+			 */
+			@Override
+			public void onRemoteMediaPlayerMetadataUpdated() {
+				updateMetadata();
+			}
 
-                @Override
-                public void onRemoteMediaPlayerStatusUpdated() {
-                    mState = mCastManager.getPlaybackStatus();
-                    updatePlayPauseState(mState);
-                }
+		};
+		mCastManager.addVideoCastConsumer(castConsumerImpl);
+		Resources res = context.getResources();
+		mPauseDrawable = res.getDrawable(R.drawable.ic_av_pause_sm_dark);
+		mPlayDrawable = res.getDrawable(R.drawable.ic_av_play_sm_dark);
+		mStopDrawable = res.getDrawable(R.drawable.ic_av_stop_sm_dark);
+	}
 
-                /*
-                 * (non-Javadoc)
-                 * @see com.google.sample.castcompanionlibrary.cast.VideoCastConsumerImpl
-                 * #onMediaChannelMetadataUpdated()
-                 */
-                @Override
-                public void onRemoteMediaPlayerMetadataUpdated() {
-                    updateMetadata();
-                }
+	/*
+	 * Hides/show the icon and metadata and play/pause if there is no media
+	 */
+	private void hideControls(boolean hide, int resId) {
+		int visibility = hide ? View.GONE : View.VISIBLE;
+		mIcon.setVisibility(visibility);
+		mTextContainer.setVisibility(visibility);
+		mTitle.setVisibility(visibility);
+		mSubTitle.setVisibility(visibility);
+		mEmptyText.setText(resId == 0 ? R.string.no_media_info : resId);
+		mEmptyText.setVisibility(hide ? View.VISIBLE : View.GONE);
+		if (hide) {
+			setLoadingVisibility(false);
+			setPausePlayVisibility(false);
+		}
+	}
 
-            };
-            mCastManager.addVideoCastConsumer(castConsumerImpl);
-            mPauseDrawable = context.getResources().getDrawable(R.drawable.ic_av_pause_sm_dark);
-            mPlayDrawable = context.getResources().getDrawable(R.drawable.ic_av_play_sm_dark);
-            mStopDrawable = context.getResources().getDrawable(R.drawable.ic_av_stop_sm_dark);
-        } catch (IllegalStateException e) {
-            LOGE(TAG, "Failed to update the content of dialog", e);
-        }
-    }
+	private void updateMetadata() {
+		try {
+			MediaInfo info = mCastManager.getRemoteMediaInformation();
+			mStreamType = info.getStreamType();
+			hideControls(false, 0);
+			MediaMetadata mm = info.getMetadata();
+			mTitle.setText(mm.getString(MediaMetadata.KEY_TITLE));
+			mSubTitle.setText(mm.getString(MediaMetadata.KEY_SUBTITLE));
+			setIcon(mm.hasImages() ? mm.getImages().get(0).getUrl().toString() : null);
+		} catch (TransientNetworkDisconnectionException e) {
+			hideControls(true, R.string.failed_no_connection_short);
+		} catch (Exception e) {
+			LOGE(TAG, "Failed to get media information", e);
+			hideControls(true, R.string.no_media_info);
+		}
+	}
 
-    /*
-     * Hides/show the icon and metadata and play/pause if there is no media
-     */
-    private void hideControls(boolean hide, int resId) {
-        int visibility = hide ? View.GONE : View.VISIBLE;
-        mIcon.setVisibility(visibility);
-        mIconContainer.setVisibility(visibility);
-        mTitle.setVisibility(visibility);
-        mSubTitle.setVisibility(visibility);
-        mEmptyText.setText(resId == 0 ? R.string.no_media_info : resId);
-        mEmptyText.setVisibility(hide ? View.VISIBLE : View.GONE);
-        if (hide) mPausePlay.setVisibility(visibility);
-    }
+	private final ImageLoader.Callbacks mIconImageLoaderCallbacks = new ImageLoader.Callbacks() {
 
-    private void updateMetadata() {
-        MediaInfo info = null;
-        try {
-            info = mCastManager.getRemoteMediaInformation();
-        } catch (TransientNetworkDisconnectionException e) {
-            hideControls(true, R.string.failed_no_connection_short);
-            return;
-        } catch (Exception e) {
-            LOGE(TAG, "Failed to get media information", e);
-            return;
-        }
-        if (null == info) {
-            hideControls(true, R.string.no_media_info);
-            return;
-        }
-        mStreamType = info.getStreamType();
-        hideControls(false, 0);
-        MediaMetadata mm = info.getMetadata();
-        mTitle.setText(mm.getString(MediaMetadata.KEY_TITLE));
-        mSubTitle.setText(mm.getString(MediaMetadata.KEY_SUBTITLE));
-        setIcon(mm.hasImages() ? mm.getImages().get(0).getUrl().toString() : null);
-    }
-
-    private final ImageLoader.Callbacks mIconImageLoaderCallbacks = new ImageLoader.Callbacks() {
-		
 		@Override
 		public void onResponse(Bitmap bm) {
 			if (bm == null) {
@@ -162,154 +141,137 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		}
 	};
 
-    public void setIcon(String url) {
-    	mIconRequest = mCastManager.loadImage(url, mIconImageLoaderCallbacks, mIconRequest);
-    }
+	public void setIcon(String url) {
+		mIconRequest = mCastManager.loadImage(url, mIconImageLoaderCallbacks, mIconRequest);
+	}
 
-    private void updatePlayPauseState(int state) {
-        if (null != mPausePlay) {
-            switch (state) {
-                case MediaStatus.PLAYER_STATE_PLAYING:
-                    mPausePlay.setImageDrawable(getPauseStopButton());
-                    adjustControlsVisibility(true);
-                    break;
-                case MediaStatus.PLAYER_STATE_PAUSED:
-                    mPausePlay.setImageDrawable(mPlayDrawable);
-                    adjustControlsVisibility(true);
-                    break;
-                case MediaStatus.PLAYER_STATE_IDLE:
-                    mPausePlay.setVisibility(View.INVISIBLE);
-                    setLoadingVisibility(false);
+	private void updatePlayPauseState() {
+		if (null != mPausePlay) {
+			int state = mCastManager.getPlaybackStatus();
+			switch (state) {
+			case MediaStatus.PLAYER_STATE_PLAYING:
+				setLoadingVisibility(false);
+				setPausePlayVisibility(true, getPauseStopButton());
+				break;
+			case MediaStatus.PLAYER_STATE_PAUSED:
+				setLoadingVisibility(false);
+				setPausePlayVisibility(true, mPlayDrawable);
+				break;
+			case MediaStatus.PLAYER_STATE_IDLE:
+				int idleReason = mCastManager.getIdleReason();
+				if (idleReason == MediaStatus.IDLE_REASON_FINISHED) {
+					hideControls(true, R.string.no_media_info);
+				} else {
+					setLoadingVisibility(false);
+					setPausePlayVisibility((mStreamType == MediaInfo.STREAM_TYPE_LIVE)
+							&& (idleReason == MediaStatus.IDLE_REASON_CANCELED), mPlayDrawable);
+				}
+				break;
+			case MediaStatus.PLAYER_STATE_BUFFERING:
+				setLoadingVisibility(true);
+				setPausePlayVisibility(false);
+				break;
+			default:
+				setLoadingVisibility(false);
+				setPausePlayVisibility(false);
+			}
+		}
+	}
 
-                    if (mState == MediaStatus.PLAYER_STATE_IDLE
-                            && mCastManager.getIdleReason() == MediaStatus.IDLE_REASON_FINISHED) {
-                        hideControls(true, R.string.no_media_info);
-                    } else {
-                        switch (mStreamType) {
-                            case MediaInfo.STREAM_TYPE_BUFFERED:
-                                mPausePlay.setVisibility(View.INVISIBLE);
-                                setLoadingVisibility(false);
-                                break;
-                            case MediaInfo.STREAM_TYPE_LIVE:
-                                int idleReason = mCastManager.getIdleReason();
-                                if (idleReason == MediaStatus.IDLE_REASON_CANCELED) {
-                                    mPausePlay.setImageDrawable(mPlayDrawable);
-                                    adjustControlsVisibility(true);
-                                } else {
-                                    mPausePlay.setVisibility(View.INVISIBLE);
-                                    setLoadingVisibility(false);
-                                }
-                                break;
-                        }
-                    }
-                    break;
-                case MediaStatus.PLAYER_STATE_BUFFERING:
-                    adjustControlsVisibility(false);
-                    break;
-                default:
-                    mPausePlay.setVisibility(View.INVISIBLE);
-                    setLoadingVisibility(false);
-            }
-        }
-    }
+	private Drawable getPauseStopButton() {
+		switch (mStreamType) {
+		case MediaInfo.STREAM_TYPE_LIVE:
+			return mStopDrawable;
+		case MediaInfo.STREAM_TYPE_BUFFERED:
+		default:
+			return mPauseDrawable;
+		}
+	}
 
-    private Drawable getPauseStopButton() {
-        switch (mStreamType) {
-            case MediaInfo.STREAM_TYPE_BUFFERED:
-                return mPauseDrawable;
-            case MediaInfo.STREAM_TYPE_LIVE:
-                return mStopDrawable;
-            default:
-                return mPauseDrawable;
-        }
-    }
+	private void setLoadingVisibility(boolean show) {
+		mLoading.setVisibility(show ? View.VISIBLE : View.GONE);
+	}
 
-    private void setLoadingVisibility(boolean show) {
-        mLoading.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
+	private void setPausePlayVisibility(boolean show) {
+		setPausePlayVisibility(show, null);
+	}
 
-    private void adjustControlsVisibility(boolean showPlayPlause) {
-        int visible = showPlayPlause ? View.VISIBLE : View.INVISIBLE;
-        mPausePlay.setVisibility(visible);
-        setLoadingVisibility(!showPlayPlause);
-    }
+	private void setPausePlayVisibility(boolean show, Drawable drawable) {
+		if (show && (drawable != null)) {
+			mPausePlay.setImageDrawable(drawable);
+		}
+		mPausePlay.setVisibility(show ? View.VISIBLE : View.GONE);
+	}
 
-    @Override
-    public void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        if (null != castConsumerImpl) {
-            mCastManager.removeVideoCastConsumer(castConsumerImpl);
-        }
-        mCastManager.cancelImageRequest(mIconRequest);
-        mIconRequest = null;
-    }
-
-    /**
-     * Initializes this dialog's set of playback buttons and adds click listeners.
-     */
-    @SuppressLint("InflateParams")
 	@Override
-    public View onCreateMediaControlView(Bundle savedInstanceState) {
-        LayoutInflater inflater = getLayoutInflater();
-        View controls = inflater.inflate(R.layout.custom_media_route_controller_controls_dialog,
-                null);
+	protected void onStop() {
+		mCastManager.removeVideoCastConsumer(castConsumerImpl);
+		mCastManager.cancelImageRequest(mIconRequest);
+		mIconRequest = null;
+		super.onStop();
+	}
 
-        loadViews(controls);
-        mState = mCastManager.getPlaybackStatus();
-        updateMetadata();
-        updatePlayPauseState(mState);
-        setupCallbacks();
-        return controls;
-    }
+	/**
+	 * Initializes this dialog's set of playback buttons and adds click listeners.
+	 */
+	@SuppressLint("InflateParams")
+	@Override
+	public View onCreateMediaControlView(Bundle savedInstanceState) {
+		LayoutInflater inflater = getLayoutInflater();
+		View controls = inflater.inflate(R.layout.custom_media_route_controller_controls_dialog, null);
 
-    private void setupCallbacks() {
+		loadViews(controls);
+		updateMetadata();
+		updatePlayPauseState();
+		setupCallbacks();
+		return controls;
+	}
 
-        mPausePlay.setOnClickListener(new View.OnClickListener() {
+	private void setupCallbacks() {
 
-            @Override
-            public void onClick(View v) {
-                if (null == mCastManager) {
-                    return;
-                }
-                try {
-                    adjustControlsVisibility(false);
-                    mCastManager.togglePlayback();
-                } catch (TransientNetworkDisconnectionException e) {
-                    adjustControlsVisibility(true);
-                    LOGE(TAG, "Failed to toggle playback due to network issues", e);
-                } catch (NoConnectionException e) {
-                    adjustControlsVisibility(true);
-                    LOGE(TAG, "Failed to toggle playback due to network issues", e);
-                }
-            }
-        });
+		mPausePlay.setOnClickListener(new View.OnClickListener() {
 
-        mIcon.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				setLoadingVisibility(true);
+				setPausePlayVisibility(false);
+				try {
+					mCastManager.togglePlayback();
+				} catch (TransientNetworkDisconnectionException e) {
+					setLoadingVisibility(false);
+					setPausePlayVisibility(true);
+					LOGE(TAG, "Failed to toggle playback due to network issues", e);
+				} catch (NoConnectionException e) {
+					setLoadingVisibility(false);
+					setPausePlayVisibility(true);
+					LOGE(TAG, "Failed to toggle playback due to network issues", e);
+				}
+			}
+		});
 
-            @Override
-            public void onClick(View v) {
+		mIcon.setOnClickListener(new View.OnClickListener() {
 
-                if (null != mCastManager
-                        && null != mCastManager.getTargetActivity()) {
-                    try {
-                        mCastManager.onTargetActivityInvoked(v.getContext());
-                    } catch (Exception e) {
-                        LOGE(TAG, "Failed to start the target activity due to network issues", e);
-                    }
-                    cancel();
-                }
+			@Override
+			public void onClick(View v) {
+				if (null != mCastManager.getTargetActivity()) {
+					try {
+						mCastManager.onTargetActivityInvoked(v.getContext());
+					} catch (Exception e) {
+						LOGE(TAG, "Failed to start the target activity due to network issues", e);
+					}
+					cancel();
+				}
+			}
+		});
+	}
 
-            }
-        });
-    }
-
-    private void loadViews(View controls) {
-        mIcon = (ImageView) controls.findViewById(R.id.iconView);
-        mIconContainer = controls.findViewById(R.id.iconContainer);
-        mPausePlay = (ImageView) controls.findViewById(R.id.playPauseView);
-        mTitle = (TextView) controls.findViewById(R.id.titleView);
-        mSubTitle = (TextView) controls.findViewById(R.id.subTitleView);
-        mLoading = (ProgressBar) controls.findViewById(R.id.loadingView);
-        mEmptyText = (TextView) controls.findViewById(R.id.emptyView);
-    }
+	private void loadViews(View controls) {
+		mIcon = (ImageView) controls.findViewById(R.id.iconView);
+		mPausePlay = (ImageView) controls.findViewById(R.id.playPauseView);
+		mTextContainer = controls.findViewById(R.id.textContainer);
+		mTitle = (TextView) controls.findViewById(R.id.titleView);
+		mSubTitle = (TextView) controls.findViewById(R.id.subTitleView);
+		mLoading = controls.findViewById(R.id.loadingView);
+		mEmptyText = (TextView) controls.findViewById(R.id.emptyView);
+	}
 }
