@@ -266,7 +266,7 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 
 	@Override
 	public void updateControllersStatus(boolean enabled) {
-		mControllers.setVisibility(enabled ? View.VISIBLE : View.GONE);
+		mControllers.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
 		if (enabled) {
 			adjustControllersForLiveStream(mStreamType == MediaInfo.STREAM_TYPE_LIVE);
 		}
