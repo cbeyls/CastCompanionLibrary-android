@@ -5,8 +5,7 @@ import com.google.sample.castcompanionlibrary.cast.activities.VideoCastActivity;
 import com.google.sample.castcompanionlibrary.widgets.IMiniController;
 
 /**
- * This class takes care of automatically handling the lifecycle events of a MiniController view in
- * the layout.
+ * This class takes care of automatically handling the lifecycle events of a MiniController view in the layout.
  * 
  * @author Christophe Beyls
  * 
@@ -14,14 +13,18 @@ import com.google.sample.castcompanionlibrary.widgets.IMiniController;
 public class MiniControllerActivity extends VideoCastActivity {
 
 	private IMiniController mMiniController;
+	private boolean mMiniControllerRetrieved;
 
 	@Override
 	protected void onStart() {
 		super.onStart();
-		if (mMiniController == null) {
+		if (!mMiniControllerRetrieved) {
 			mMiniController = (IMiniController) findViewById(getMiniControllerId());
+			mMiniControllerRetrieved = true;
 		}
-		mCastManager.addMiniController(mMiniController);
+		if (mMiniController != null) {
+			mCastManager.addMiniController(mMiniController);
+		}
 	}
 
 	@Override
