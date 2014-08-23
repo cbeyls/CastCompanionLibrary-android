@@ -496,10 +496,7 @@ public class VideoCastManager extends BaseCastManager
             case MediaStatus.PLAYER_STATE_BUFFERING:
                 return true;
             case MediaStatus.PLAYER_STATE_IDLE:
-                if (!isRemoteStreamLive()) {
-                    return false;
-                }
-                return idleReason == MediaStatus.IDLE_REASON_CANCELED;
+            	return isRemoteStreamLive() && (idleReason == MediaStatus.IDLE_REASON_CANCELED);
             default:
                 return false;
         }
@@ -1512,7 +1509,6 @@ public class VideoCastManager extends BaseCastManager
         try {
             double volume = getVolume();
             boolean isMute = isMute();
-            boolean makeUiHidden = false;
             switch(mState) {
             case MediaStatus.PLAYER_STATE_PLAYING:
             	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = playing");
@@ -1528,18 +1524,15 @@ public class VideoCastManager extends BaseCastManager
                 switch(mIdleReason) {
                 case MediaStatus.IDLE_REASON_FINISHED:
                 	removeRemoteControlClient();
-                    makeUiHidden = true;
                 	break;
                 case MediaStatus.IDLE_REASON_ERROR:
                 	// something bad happened on the cast device
                     LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): IDLE reason = ERROR");
                     removeRemoteControlClient();
-                    makeUiHidden = true;
                     onFailed(R.string.failed_receiver_player_error, NO_STATUS_CODE);
                     break;
                 case MediaStatus.IDLE_REASON_CANCELED:
                 	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): IDLE reason = CANCELLED");
-                    makeUiHidden = !isRemoteStreamLive();
                 	break;
                 }
                 break;
@@ -1548,14 +1541,12 @@ public class VideoCastManager extends BaseCastManager
             	break;
             default:
             	LOGD(TAG, "onRemoteMediaPlayerStatusUpdated(): Player status = unknown");
-                makeUiHidden = true;
             }
-            if (makeUiHidden) {
-                stopNotificationService();
-            } else {
-                updateMiniControllersPlaybackStatus();
+            boolean uiVisible = shouldRemoteUiBeVisible(mState, mIdleReason);
+            if (uiVisible) {
+            	updateMiniControllersPlaybackStatus();
             }
-            updateMiniControllersVisibility(!makeUiHidden);
+            updateMiniControllersVisibility(uiVisible);
             for (IVideoCastConsumer consumer : mVideoConsumers) {
                 try {
                     consumer.onRemoteMediaPlayerStatusUpdated();
