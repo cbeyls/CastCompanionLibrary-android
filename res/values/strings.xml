@@ -39,6 +39,6 @@
     <string name="failed_status_request">Failed to sync up with the cast device</string>
     <string name="failed_load">Failed to load media on the cast device</string>
     <string name="failed_seek">Failed to seek to the new position on the cast device</string>
-    <string name="failed_receiver_player_error">Receiver player has encountered a sever error</string>
+    <string name="failed_receiver_player_error">Receiver player has encountered an error</string>
 
 </resources>
