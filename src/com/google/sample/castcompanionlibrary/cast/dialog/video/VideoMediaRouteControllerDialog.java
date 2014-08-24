@@ -102,8 +102,6 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		int visibility = hide ? View.GONE : View.VISIBLE;
 		mIcon.setVisibility(visibility);
 		mTextContainer.setVisibility(visibility);
-		mTitle.setVisibility(visibility);
-		mSubTitle.setVisibility(visibility);
 		mEmptyText.setText(resId == 0 ? R.string.no_media_info : resId);
 		mEmptyText.setVisibility(hide ? View.VISIBLE : View.GONE);
 		if (hide) {
@@ -249,7 +247,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 			}
 		});
 
-		mIcon.setOnClickListener(new View.OnClickListener() {
+		View.OnClickListener mediaClickListener = new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -262,7 +260,9 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 					cancel();
 				}
 			}
-		});
+		};
+		mIcon.setOnClickListener(mediaClickListener);
+		mTextContainer.setOnClickListener(mediaClickListener);
 	}
 
 	private void loadViews(View controls) {
