@@ -802,7 +802,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
                             mReconnectionTask.cancel(true);
                         }
                     });
-                    dlg.setButton(ProgressDialog.BUTTON_NEGATIVE, "Cancel",
+                    dlg.setButton(ProgressDialog.BUTTON_NEGATIVE, context.getString(android.R.string.cancel),
                             new DialogInterface.OnClickListener() {
 
                                 @Override
