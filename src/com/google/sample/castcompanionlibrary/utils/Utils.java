@@ -61,7 +61,7 @@ public class Utils {
      * @param context
      * @param resourceId
      */
-    public static final void showErrorDialog(Context context, int resourceId) {
+    public static void showErrorDialog(Context context, int resourceId) {
         showErrorDialog(context, context.getString(resourceId));
     }
 
@@ -71,7 +71,7 @@ public class Utils {
      * @param context
      * @param message The message to be shown in the dialog
      */
-    public static final void showErrorDialog(Context context, String message) {
+    public static void showErrorDialog(Context context, String message) {
         new AlertDialog.Builder(context).setTitle(R.string.error)
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {

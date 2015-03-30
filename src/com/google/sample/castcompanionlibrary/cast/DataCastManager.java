@@ -21,6 +21,7 @@ import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,9 +115,7 @@ public class DataCastManager extends BaseCastManager
         super(context, applicationId);
         mDataConsumers = new ArrayList<IDataCastConsumer>();
         if (null != namespaces) {
-            for (String namespace : namespaces) {
-                mNamespaceList.add(namespace);
-            }
+			Collections.addAll(mNamespaceList, namespaces);
         }
     }
 
@@ -169,7 +168,7 @@ public class DataCastManager extends BaseCastManager
      *             possibly transient loss of network
      * @throws IllegalArgumentException If namespace is null or empty
      */
-    public boolean addNamespace(String namespace) throws IllegalStateException, IOException,
+    public boolean addNamespace(String namespace) throws IllegalStateException,
             TransientNetworkDisconnectionException, NoConnectionException {
         checkConnectivity();
         if (TextUtils.isEmpty(namespace)) {
@@ -238,10 +237,9 @@ public class DataCastManager extends BaseCastManager
      * @throws IllegalArgumentException If the the message is null, empty, or too long; or if the
      *             namespace is null or too long.
      * @throws IllegalStateException If there is no active service connection.
-     * @throws IOException
      */
     public void sendDataMessage(String message, String namespace)
-            throws IllegalArgumentException, IllegalStateException, IOException,
+            throws IllegalArgumentException, IllegalStateException,
             TransientNetworkDisconnectionException, NoConnectionException {
         checkConnectivity();
         if (TextUtils.isEmpty(namespace)) {
@@ -438,7 +436,7 @@ public class DataCastManager extends BaseCastManager
     }
 
     public void onApplicationStatusChanged() {
-        String appStatus = null;
+        String appStatus;
         if (!isConnected()) {
             return;
         }

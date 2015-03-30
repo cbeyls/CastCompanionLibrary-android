@@ -122,7 +122,7 @@ public class VideoCastManager extends BaseCastManager
      */
     public static enum VolumeType {
         STREAM,
-        DEVICE;
+        DEVICE
     }
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastManager.class);
@@ -698,10 +698,8 @@ public class VideoCastManager extends BaseCastManager
      * @param delta
      */
     public void updateVolume(int delta) {
-        if (null != mMediaRouter.getSelectedRoute()) {
-            RouteInfo info = mMediaRouter.getSelectedRoute();
-            info.requestUpdateVolume(delta);
-        }
+		RouteInfo info = mMediaRouter.getSelectedRoute();
+		info.requestUpdateVolume(delta);
     }
 
     /**
@@ -834,7 +832,7 @@ public class VideoCastManager extends BaseCastManager
     }
 
     private void onApplicationStatusChanged() {
-        String appStatus = null;
+        String appStatus;
         if (!isConnected()) {
             return;
         }
@@ -967,7 +965,6 @@ public class VideoCastManager extends BaseCastManager
                 mReconnectionStatus = ReconnectionStatus.INACTIVE;
                 onDeviceSelected(null);
             }
-            return;
         } else {
             boolean showError = false;
             for (IVideoCastConsumer consumer : mVideoConsumers) {
@@ -1331,7 +1328,7 @@ public class VideoCastManager extends BaseCastManager
     private void detachMediaChannel() {
         LOGD(TAG, "trying to detach media channel");
         if (null != mRemoteMediaPlayer) {
-            if (null != mRemoteMediaPlayer && null != Cast.CastApi) {
+            if (null != Cast.CastApi) {
                 try {
                     Cast.CastApi.removeMessageReceivedCallbacks(mApiClient,
                             mRemoteMediaPlayer.getNamespace());

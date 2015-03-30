@@ -74,7 +74,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
      * Enumerates various stages during a session recovery
      */
     public static enum ReconnectionStatus {
-        STARTED, IN_PROGRESS, FINALIZE, INACTIVE;
+        STARTED, IN_PROGRESS, FINALIZE, INACTIVE
     }
 
     public static final int FEATURE_DEBUGGING = 1;
@@ -254,8 +254,6 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
                     }
                 }
             } catch (IllegalStateException e) {
-                LOGE(TAG, "Failed to stop the application after disconnecting route", e);
-            } catch (IOException e) {
                 LOGE(TAG, "Failed to stop the application after disconnecting route", e);
             } catch (TransientNetworkDisconnectionException e) {
                 LOGE(TAG, "Failed to stop the application after disconnecting route", e);
@@ -980,16 +978,12 @@ public void onCastAvailabilityChanged(boolean castPresent) {
         mConnectionSuspened = false;
         setDevice(null, mDestroyOnDisconnect);
         mMediaRouter.selectRoute(mMediaRouter.getDefaultRoute());
-        boolean showError = false;
         for (IBaseCastConsumer consumer : mBaseCastConsumers) {
             try {
                 consumer.onConnectionFailed(result);
             } catch (Exception e) {
                 LOGE(TAG, "onConnectionFailed(): Failed to inform " + consumer, e);
             }
-        }
-        if (showError) {
-            Utils.showErrorDialog(mContext, R.string.failed_to_connect);
         }
     }
 
@@ -1067,11 +1061,10 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      * Stops the application on the receiver device.
      *
      * @throws IllegalStateException
-     * @throws IOException
      * @throws NoConnectionException
      * @throws TransientNetworkDisconnectionException
      */
-    public void stopApplication() throws IllegalStateException, IOException,
+    public void stopApplication() throws IllegalStateException,
             TransientNetworkDisconnectionException, NoConnectionException {
         checkConnectivity();
         Cast.CastApi.stopApplication(mApiClient, mSessionId).setResultCallback(new ResultCallback<Status>() {
@@ -1149,7 +1142,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
      *
      * @return
      */
-    public final static String getCclVersion() {
+    public static String getCclVersion() {
         return CCL_VERSION;
     }
 }

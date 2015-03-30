@@ -79,7 +79,6 @@
                 android:layout_toRightOf="@+id/imageView1"
                 android:gravity="right|center_vertical"
                 android:maxLines="1"
-                android:text="00:00"
                 android:textColor="@android:color/white" />
 
             <SeekBar
@@ -100,7 +99,6 @@
                 android:layout_marginRight="8dp"
                 android:gravity="left|center_vertical"
                 android:maxLines="1"
-                android:text="0:00"
                 android:textColor="@android:color/white" />
         </RelativeLayout>
     </LinearLayout>

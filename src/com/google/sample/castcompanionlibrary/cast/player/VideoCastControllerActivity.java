@@ -171,7 +171,7 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 					if (null != mListener) {
 						mListener.onProgressChanged(seekBar, progress, fromUser);
 					}
-				} catch (Exception e) {
+				} catch (Exception ignore) {
 				}
 			}
 		});

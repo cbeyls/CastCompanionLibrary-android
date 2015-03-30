@@ -91,7 +91,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 				if (!TextUtils.isEmpty(customDataStr)) {
 					try {
 						customData = new JSONObject(customDataStr);
-					} catch (JSONException e) {
+					} catch (JSONException ignore) {
 					}
 				}
 
@@ -132,8 +132,8 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 		public void onRemoteMediaPlayerMetadataUpdated() {
 			try {
 				updateMetadata(mCastManager.getRemoteMediaInformation());
-			} catch (TransientNetworkDisconnectionException e) {
-			} catch (NoConnectionException e) {
+			} catch (TransientNetworkDisconnectionException ignore) {
+			} catch (NoConnectionException ignore) {
 			}
 		}
 
@@ -164,8 +164,8 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 						int currentPos = (int) mCastManager.getCurrentMediaPosition();
 						mCastController.updateSeekbar(currentPos, duration);
 					}
-				} catch (TransientNetworkDisconnectionException e) {
-				} catch (NoConnectionException e) {
+				} catch (TransientNetworkDisconnectionException ignore) {
+				} catch (NoConnectionException ignore) {
 				}
 			}
 
@@ -242,8 +242,8 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 					if (mCastManager.isRemoteStreamLive()) {
 						setPlaybackStatus(mediaStatus);
 					}
-				} catch (TransientNetworkDisconnectionException e) {
-				} catch (NoConnectionException e) {
+				} catch (TransientNetworkDisconnectionException ignore) {
+				} catch (NoConnectionException ignore) {
 				}
 			}
 			break;

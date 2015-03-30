@@ -2,6 +2,7 @@ package com.google.sample.castcompanionlibrary.cast.activities;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -81,7 +82,7 @@ public class VideoCastActivity extends ActionBarActivity {
 	}
 
 	@Override
-	public boolean dispatchKeyEvent(KeyEvent event) {
+	public boolean dispatchKeyEvent(@NonNull KeyEvent event) {
 		if (mCastManager.isConnected()) {
 			boolean isKeyDown = event.getAction() == KeyEvent.ACTION_DOWN;
 			switch (event.getKeyCode()) {
