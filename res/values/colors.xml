@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <!-- Custom Media Router Dialog -->
-    <color name="mr_custom_line_1">#FFFFFF</color>
-    <color name="mr_custom_line_2">#AAAAAA</color>
-
-</resources>

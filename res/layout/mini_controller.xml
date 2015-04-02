@@ -1,44 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:padding="8dp" >
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_vertical"
+              android:orientation="horizontal"
+              android:padding="8dp">
 
     <ImageView
         android:id="@+id/iconView"
         android:layout_width="@dimen/mini_controller_icon_width"
         android:layout_height="@dimen/mini_controller_icon_height"
-        android:layout_gravity="center_vertical"
         android:scaleType="centerCrop"
-        android:src="@drawable/mini_controller_img_placeholder" />
+        android:src="@drawable/mini_controller_img_placeholder"/>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_weight="1"
-        android:orientation="vertical" >
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/titleView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-light"
-            android:singleLine="true"
-            android:textSize="@dimen/mini_controller_font_size_line1" />
+            android:lines="1"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="@dimen/mini_controller_font_size_line1"/>
 
         <TextView
             android:id="@+id/subTitleView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-light"
-            android:singleLine="true"
-            android:textSize="@dimen/mini_controller_font_size_line2" />
+            android:lines="1"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="@dimen/mini_controller_font_size_line2"/>
     </LinearLayout>
 
     <ImageView
@@ -46,21 +45,22 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center_vertical"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:scaleType="center"
-        android:src="@drawable/ic_mini_controller_pause" />
+        android:src="@drawable/ic_mini_controller_pause"/>
 
     <FrameLayout
         android:id="@+id/loadingView"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center_vertical"
-        android:visibility="gone" >
+        android:visibility="gone">
 
         <ProgressBar
             style="?android:attr/android:progressBarStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"/>
     </FrameLayout>
 
 </LinearLayout>

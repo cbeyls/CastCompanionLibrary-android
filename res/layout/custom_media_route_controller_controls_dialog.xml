@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal" >
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:gravity="center_vertical"
+              android:orientation="horizontal"
+              android:padding="4dp">
 
     <ImageView
         android:id="@+id/iconView"
@@ -10,41 +12,40 @@
         android:layout_height="64dp"
         android:layout_gravity="center_vertical"
         android:scaleType="centerCrop"
-        android:src="@drawable/video_placeholder_200x200" />
+        android:src="@drawable/video_placeholder_200x200"/>
 
     <LinearLayout
         android:id="@+id/textContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:padding="8dp" >
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
 
         <TextView
             android:id="@+id/titleView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/mr_custom_line_1"
-            android:textSize="16sp" />
+            android:lines="1"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"/>
 
         <TextView
             android:id="@+id/subTitleView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/mr_custom_line_2"
-            android:textSize="14sp" />
+            android:lines="1"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"/>
     </LinearLayout>
 
     <TextView
         android:id="@+id/emptyView"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:ellipsize="end"
         android:gravity="center"
@@ -53,28 +54,27 @@
         android:paddingRight="8dp"
         android:text="@string/no_media_info"
         android:textSize="16sp"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 
     <FrameLayout
         android:id="@+id/loadingView"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_gravity="center_vertical"
-        android:visibility="gone" >
+        android:visibility="gone">
 
         <ProgressBar
             style="?android:attr/android:progressBarStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"/>
     </FrameLayout>
 
     <ImageView
         android:id="@+id/playPauseView"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_gravity="center_vertical"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:scaleType="center"
-        android:src="@drawable/ic_av_pause_sm_dark" />
+        android:src="@drawable/ic_av_pause_sm_dark"/>
 
 </LinearLayout>
