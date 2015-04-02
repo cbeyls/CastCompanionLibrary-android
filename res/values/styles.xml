@@ -1,13 +1,9 @@
 <resources>
 
     <!-- Dialog -->
-    <style name="CastDialog" parent="@android:style/Theme.Dialog">
-        <item name="android:windowTitleStyle">@style/CastDialogWindowTitle</item>
-    </style>
 
-    <style name="CastDialogWindowTitle">
-        <item name="android:textSize">22sp</item>
-        <item name="android:textColor">@color/mr_custom_title</item>
-    </style>
+    <style name="Base.CastDialog" parent="android:Theme.Dialog"/>
+
+    <style name="CastDialog" parent="Base.CastDialog"/>
 
 </resources>

@@ -1,8 +1,7 @@
 <resources>
 
     <!-- Dialog -->
-    <style name="CastDialog" parent="@android:style/Theme.Holo.Dialog">
-        <item name="android:windowTitleStyle">@style/CastDialogWindowTitle</item>
-    </style>
+
+    <style name="Base.CastDialog" parent="android:Theme.Holo.Dialog"/>
 
 </resources>

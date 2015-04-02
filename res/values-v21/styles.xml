@@ -1,0 +1,7 @@
+<resources>
+
+    <!-- Dialog -->
+
+    <style name="Base.CastDialog" parent="android:Theme.Material.Dialog"/>
+
+</resources>
