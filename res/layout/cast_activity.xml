@@ -55,7 +55,7 @@
                 android:layout_marginRight="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="center"
-                android:src="@drawable/ic_av_pause_dark"/>
+                android:src="@drawable/ic_pause_white_48dp"/>
 
             <TextView
                 android:id="@+id/liveText"

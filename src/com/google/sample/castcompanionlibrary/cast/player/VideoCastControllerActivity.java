@@ -107,9 +107,9 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 
 	private void loadAndSetupViews() {
 		Resources res = getResources();
-		mPauseDrawable = res.getDrawable(R.drawable.ic_av_pause_dark);
-		mPlayDrawable = res.getDrawable(R.drawable.ic_av_play_dark);
-		mStopDrawable = res.getDrawable(R.drawable.ic_av_stop_dark);
+		mPauseDrawable = res.getDrawable(R.drawable.ic_pause_white_48dp);
+		mPlayDrawable = res.getDrawable(R.drawable.ic_play_arrow_white_48dp);
+		mStopDrawable = res.getDrawable(R.drawable.ic_stop_white_48dp);
 		mPageView = findViewById(R.id.pageView);
 		mPlayPause = (ImageView) findViewById(R.id.imageView1);
 		mLiveText = (TextView) findViewById(R.id.liveText);

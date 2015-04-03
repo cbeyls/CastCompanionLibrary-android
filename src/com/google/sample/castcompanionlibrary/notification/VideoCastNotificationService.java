@@ -271,9 +271,9 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 	        int playPauseImageResId;
 	        if (mStatus == MediaStatus.PLAYER_STATE_PLAYING) {
 	        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
-	        			? R.drawable.ic_av_stop_sm_dark : R.drawable.ic_av_pause_sm_dark;
+	        			? R.drawable.ic_stop_white_36dp : R.drawable.ic_pause_white_36dp;
 	        } else {
-	        	playPauseImageResId = R.drawable.ic_av_play_sm_dark;
+	        	playPauseImageResId = R.drawable.ic_play_arrow_white_36dp;
 	        }
 	        rv.setImageViewResource(R.id.playPauseView, playPauseImageResId);
         }

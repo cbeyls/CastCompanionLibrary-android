@@ -90,9 +90,9 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		};
 		mCastManager.addVideoCastConsumer(castConsumerImpl);
 		Resources res = context.getResources();
-		mPauseDrawable = res.getDrawable(R.drawable.ic_av_pause_sm_dark);
-		mPlayDrawable = res.getDrawable(R.drawable.ic_av_play_sm_dark);
-		mStopDrawable = res.getDrawable(R.drawable.ic_av_stop_sm_dark);
+		mPauseDrawable = res.getDrawable(R.drawable.ic_pause_white_36dp);
+		mPlayDrawable = res.getDrawable(R.drawable.ic_play_arrow_white_36dp);
+		mStopDrawable = res.getDrawable(R.drawable.ic_stop_white_36dp);
 	}
 
 	/*
