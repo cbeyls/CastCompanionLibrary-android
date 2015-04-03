@@ -2,9 +2,13 @@
 <resources>
 
     <string name="app_name">Cast Companion Library</string>
-    <string name="ccl_version">1.8B</string>
+    <string name="ccl_version">2.0.0B</string>
     <string name="media_route_menu_title">Play on&#8230;</string>
     <string name="live">Live</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="disconnect">Disconnect</string>
 
     <!-- Title of the Error Dialog -->
     <string name="error">Error</string>

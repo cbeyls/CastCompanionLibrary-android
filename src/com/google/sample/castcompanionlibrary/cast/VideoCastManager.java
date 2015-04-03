@@ -26,6 +26,7 @@ import java.util.List;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -127,7 +128,7 @@ public class VideoCastManager extends BaseCastManager
 
     private static final String TAG = LogUtils.makeLogTag(VideoCastManager.class);
     private static VideoCastManager sInstance;
-    private final Class<?> mTargetActivity;
+    private final Class<? extends Activity> mTargetActivity;
     private final List<IMiniController> mMiniControllers;
     private Bitmap mMiniControllersIcon;
     private ImageLoader.Request mMiniControllersIconRequest;
@@ -165,7 +166,7 @@ public class VideoCastManager extends BaseCastManager
      * @see getInstance()
      */
     public static synchronized VideoCastManager initialize(Context context,
-            String applicationId, Class<?> targetActivity, String dataNamespace, ImageLoader imageLoader) {
+            String applicationId, Class<? extends Activity> targetActivity, String dataNamespace, ImageLoader imageLoader) {
         if (null == sInstance) {
             LOGD(TAG, "New instance of VideoCastManager is created");
             if (ConnectionResult.SUCCESS != GooglePlayServicesUtil
@@ -180,7 +181,7 @@ public class VideoCastManager extends BaseCastManager
     }
 
     public static VideoCastManager initialize(Context context,
-            String applicationId, Class<?> targetActivity, String dataNamespace) {
+            String applicationId, Class<? extends Activity> targetActivity, String dataNamespace) {
     	return initialize(context, applicationId, targetActivity, dataNamespace, null);
     }
 
@@ -219,7 +220,7 @@ public class VideoCastManager extends BaseCastManager
         return sInstance;
     }
 
-    private VideoCastManager(Context context, String applicationId, Class<?> targetActivity,
+    private VideoCastManager(Context context, String applicationId, Class<? extends Activity> targetActivity,
             String dataNamespace, ImageLoader imageLoader) {
         super(context, applicationId);
         LOGD(TAG, "VideoCastManager is instantiated");
@@ -778,7 +779,7 @@ public class VideoCastManager extends BaseCastManager
      *
      * @return
      */
-    public Class<?> getTargetActivity() {
+    public Class<? extends Activity> getTargetActivity() {
         return mTargetActivity;
     }
 

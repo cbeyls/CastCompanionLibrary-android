@@ -16,16 +16,14 @@
 
 package com.google.sample.castcompanionlibrary.notification;
 
-import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
-import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,6 +46,9 @@ import com.google.sample.castcompanionlibrary.cast.player.VideoCastControllerAct
 import com.google.sample.castcompanionlibrary.utils.LogUtils;
 import com.google.sample.castcompanionlibrary.utils.Utils;
 
+import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGD;
+import static com.google.sample.castcompanionlibrary.utils.LogUtils.LOGE;
+
 /**
  * A service to provide status bar Notifications when we are casting. For JB+ versions, notification
  * area provides a play/pause toggle and an "x" button to disconnect but that for GB, we do not
@@ -55,227 +56,250 @@ import com.google.sample.castcompanionlibrary.utils.Utils;
  */
 public class VideoCastNotificationService extends Service implements VideoCastManager.UiVisibilityListener {
 
-    public static final String ACTION_TOGGLE_PLAYBACK =
-            "com.google.sample.castcompanionlibrary.action.toggleplayback";
-    public static final String ACTION_STOP =
-            "com.google.sample.castcompanionlibrary.action.stop";
-    private static int NOTIFICATION_ID = 1;
+	public static final String ACTION_TOGGLE_PLAYBACK =
+			"com.google.sample.castcompanionlibrary.action.toggleplayback";
+	public static final String ACTION_STOP =
+			"com.google.sample.castcompanionlibrary.action.stop";
+	private static int NOTIFICATION_ID = 1;
+	private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
 
-    private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
-    private ImageLoader.Request mVideoArtRequest;
-    private Class<?> mTargetActivity;
-    private int mStatus;
-    private Notification mNotification;
-    private boolean mVisible;
-    private VideoCastManager mCastManager;
-    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+	private VideoCastManager mCastManager;
+	private Class<? extends Activity> mTargetActivity;
+	private Notification mNotification;
+	private boolean mVisible;
+	private ImageLoader.Request mVideoArtRequest;
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            LOGD(TAG, "onReceive(): " + intent.getAction());
-        }
-    };
-    private final VideoCastConsumerImpl mConsumer = new VideoCastConsumerImpl() {
-        @Override
-        public void onApplicationDisconnected(int errorCode) {
-            LOGD(TAG, "onApplicationDisconnected() was reached");
-            stopSelf();
-        }
+	private final VideoCastConsumerImpl mConsumer = new VideoCastConsumerImpl() {
 
-        @Override
-        public void onRemoteMediaPlayerStatusUpdated() {
-            int mediaStatus = mCastManager.getPlaybackStatus();
-            VideoCastNotificationService.this.onRemoteMediaPlayerStatusUpdated(mediaStatus);
-        }
-    };
+		@Override
+		public void onApplicationDisconnected(int errorCode) {
+			LOGD(TAG, "onApplicationDisconnected() was reached");
+			stopSelf();
+		}
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        LOGD(TAG, "onCreate()");
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(mBroadcastReceiver, filter);
+		@Override
+		public void onRemoteMediaPlayerStatusUpdated() {
+			int mediaStatus = mCastManager.getPlaybackStatus();
+			VideoCastNotificationService.this.onRemoteMediaPlayerStatusUpdated(mediaStatus);
+		}
+	};
 
-        mCastManager = VideoCastManager.getInstance();
-        mTargetActivity = mCastManager.getTargetActivity();
-        if (!mCastManager.isConnected()) {
-            mCastManager.reconnectSessionIfPossible(this, false);
-        }
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		LOGD(TAG, "onCreate()");
 
-        mCastManager.addUiVisibilityListener(this);
-        mVisible = !mCastManager.isUiVisible();
+		mCastManager = VideoCastManager.getInstance();
+		mTargetActivity = mCastManager.getTargetActivity();
+		if (null == mTargetActivity) {
+			mTargetActivity = VideoCastControllerActivity.class;
+		}
+		if (!mCastManager.isConnected()) {
+			mCastManager.reconnectSessionIfPossible(this, false);
+		}
 
-        mCastManager.addVideoCastConsumer(mConsumer);
-        // Force build the notification if we are already playing
-        mConsumer.onRemoteMediaPlayerStatusUpdated();
-    }
+		mCastManager.addUiVisibilityListener(this);
+		mVisible = !mCastManager.isUiVisible();
 
-    @Override
-    public IBinder onBind(Intent arg0) {
-        return null;
-    }
+		mCastManager.addVideoCastConsumer(mConsumer);
+		// Force build the notification if we are already playing
+		mConsumer.onRemoteMediaPlayerStatusUpdated();
+	}
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return Service.START_REDELIVER_INTENT;
-    }
+	@Override
+	public IBinder onBind(Intent arg0) {
+		return null;
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		return Service.START_REDELIVER_INTENT;
+	}
 
 	@Override
 	public void onUiVisibilityChanged(boolean visible) {
 		// Notification is visible when the UI is not
 		mVisible = !visible;
 		if (mVisible && null != mNotification) {
-            startForeground(NOTIFICATION_ID, mNotification);
-        } else {
-            stopForeground(true);
-        }
+			startForeground(NOTIFICATION_ID, mNotification);
+		} else {
+			stopForeground(true);
+		}
 	}
 
-    private void setupNotification(final MediaInfo info) {
-        if (null == info) {
-            return;
-        }
-        mCastManager.cancelImageRequest(mVideoArtRequest);
-        mVideoArtRequest = mCastManager.loadImage(Utils.getImageUrl(info, 0), new ImageLoader.Callbacks() {
-    		@Override
-    		public void onResponse(Bitmap bitmap) {
-    			try {
-    				build(info, bitmap);
-                    if (mVisible) {
-                        startForeground(NOTIFICATION_ID, mNotification);
-                    }
-                } catch (Exception e) {
-                    LOGE(TAG, "Failed to set notification for " + info.toString(), e);
-                }
-    		}
-    	}, null);
-    }
+	private void setupNotification(final MediaInfo info, final int mediaStatus) {
+		if (null == info) {
+			return;
+		}
+		mCastManager.cancelImageRequest(mVideoArtRequest);
+		mVideoArtRequest = mCastManager.loadImage(Utils.getImageUrl(info, 0), new ImageLoader.Callbacks() {
+			@Override
+			public void onResponse(Bitmap bitmap) {
+				try {
+					if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+						mNotification = buildLegacyNotification(info, mediaStatus, bitmap);
+					} else {
+						mNotification = buildNotification(info, mediaStatus, bitmap);
+					}
+					if (mVisible) {
+						startForeground(NOTIFICATION_ID, mNotification);
+					}
+				} catch (Exception e) {
+					LOGE(TAG, "Failed to set notification for " + info.toString(), e);
+				}
+			}
+		}, null);
+	}
 
-    /**
-     * Removes the existing notification.
-     */
-    private void removeNotification() {
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).
-                cancel(NOTIFICATION_ID);
-    }
+	/**
+	 * Removes the existing notification.
+	 */
+	private void removeNotification() {
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFICATION_ID);
+	}
 
-    private void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
-        mStatus = mediaStatus;
-        LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached with status: " + mStatus);
-        try {
-            switch (mediaStatus) {
-                case MediaStatus.PLAYER_STATE_BUFFERING: // (== 4)
-                case MediaStatus.PLAYER_STATE_PLAYING: // (== 2)
-                case MediaStatus.PLAYER_STATE_PAUSED: // (== 3)
-                    setupNotification(mCastManager.getRemoteMediaInformation());
-                    break;
-                case MediaStatus.PLAYER_STATE_IDLE: // (== 1)
-                    if (mCastManager.shouldRemoteUiBeVisible(mediaStatus,
-                            mCastManager.getIdleReason())) {
-                    	setupNotification(mCastManager.getRemoteMediaInformation());
-                    	break;
-                    }
-                case MediaStatus.PLAYER_STATE_UNKNOWN: // (== 0)
-                    stopForeground(true);
-                    break;
-            }
-        } catch (TransientNetworkDisconnectionException e) {
-            LOGE(TAG, "Failed to update the playback status due to network issues", e);
-        } catch (NoConnectionException e) {
-            LOGE(TAG, "Failed to update the playback status due to network issues", e);
-        }
-    }
+	private void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
+		LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached with status: " + mediaStatus);
+		try {
+			switch (mediaStatus) {
+				case MediaStatus.PLAYER_STATE_BUFFERING: // (== 4)
+				case MediaStatus.PLAYER_STATE_PLAYING: // (== 2)
+				case MediaStatus.PLAYER_STATE_PAUSED: // (== 3)
+					setupNotification(mCastManager.getRemoteMediaInformation(), mediaStatus);
+					break;
+				case MediaStatus.PLAYER_STATE_IDLE: // (== 1)
+					if (mCastManager.shouldRemoteUiBeVisible(mediaStatus, mCastManager.getIdleReason())) {
+						setupNotification(mCastManager.getRemoteMediaInformation(), mediaStatus);
+						break;
+					}
+				case MediaStatus.PLAYER_STATE_UNKNOWN: // (== 0)
+					stopForeground(true);
+					break;
+			}
+		} catch (TransientNetworkDisconnectionException e) {
+			LOGE(TAG, "Failed to update the playback status due to network issues", e);
+		} catch (NoConnectionException e) {
+			LOGE(TAG, "Failed to update the playback status due to network issues", e);
+		}
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see android.app.Service#onDestroy()
-     */
-    @Override
-    public void onDestroy() {
-        mCastManager.cancelImageRequest(mVideoArtRequest);
-        mVideoArtRequest = null;
-        LOGD(TAG, "onDestroy was called");
-        removeNotification();
-        unregisterReceiver(mBroadcastReceiver);
-        mCastManager.removeVideoCastConsumer(mConsumer);
-        mCastManager.removeUiVisibilityListener(this);
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see android.app.Service#onDestroy()
+	 */
+	@Override
+	public void onDestroy() {
+		mCastManager.cancelImageRequest(mVideoArtRequest);
+		mVideoArtRequest = null;
+		LOGD(TAG, "onDestroy was called");
+		removeNotification();
+		mCastManager.removeVideoCastConsumer(mConsumer);
+		mCastManager.removeUiVisibilityListener(this);
+	}
 
-    /*
-     * Build the notification. We also need to add the appropriate "back stack"
-     * so when user goes into the CastPlayerActivity, she can have a meaningful "back" experience.
-     */
-    private void build(MediaInfo info, Bitmap bitmap) {
-        Bundle mediaWrapper = Utils.fromMediaInfo(info);
-        if (null == mTargetActivity) {
-            mTargetActivity = VideoCastControllerActivity.class;
-        }
-        Intent contentIntent = new Intent(this, mTargetActivity);
-        contentIntent.putExtra("media", mediaWrapper);
+	/*
+	 * Build the notification for Android < LOLLIPOP. We also need to add the appropriate "back stack"
+	 * so when user goes into the CastPlayerActivity, she can have a meaningful "back" experience.
+	 */
+	private Notification buildLegacyNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
+		RemoteViews rv = new RemoteViews(getPackageName(), R.layout.custom_notification);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+			setPlaybackControls(rv, info, mediaStatus);
+		}
+		if (null != bitmap) {
+			rv.setImageViewBitmap(R.id.iconView, bitmap);
+		}
+		rv.setTextViewText(R.id.titleView, info.getMetadata().getString(MediaMetadata.KEY_TITLE));
+		String castingTo = getString(R.string.casting_to_device, mCastManager.getDeviceName());
+		rv.setTextViewText(R.id.subTitleView, castingTo);
+		Notification notification = new NotificationCompat.Builder(this)
+				.setSmallIcon(R.drawable.ic_notification_cast)
+				.setContentIntent(getContentPendingIntent(info))
+				.setContent(rv)
+				.setAutoCancel(false)
+				.setOngoing(true)
+				.build();
 
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this)
-        		.addParentStack(mTargetActivity)
-        		.addNextIntent(contentIntent);
-        if (stackBuilder.getIntentCount() > 1) {
-            stackBuilder.editIntentAt(1).putExtra("media", mediaWrapper);
-        }
+		// to get around a bug in GB version, we add the following line
+		// see https://code.google.com/p/android/issues/detail?id=30495
+		notification.contentView = rv;
+		return notification;
+	}
 
-        // Gets a PendingIntent containing the entire back stack
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(NOTIFICATION_ID, PendingIntent.FLAG_UPDATE_CURRENT);
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+	private void setPlaybackControls(RemoteViews rv, MediaInfo info, int mediaStatus) {
+		rv.setOnClickPendingIntent(R.id.playPauseView, getPlaybackPendingIntent());
+		rv.setOnClickPendingIntent(R.id.removeView, getDisconnectPendingIntent());
 
-        MediaMetadata mm = info.getMetadata();
+		if (mediaStatus == MediaStatus.PLAYER_STATE_BUFFERING) {
+			rv.setViewVisibility(R.id.loadingView, View.VISIBLE);
+			rv.setViewVisibility(R.id.playPauseView, View.GONE);
+		} else {
+			rv.setViewVisibility(R.id.loadingView, View.GONE);
+			rv.setViewVisibility(R.id.playPauseView, View.VISIBLE);
+			rv.setImageViewResource(R.id.playPauseView, getPlayPauseIconResId(info, mediaStatus));
+		}
+	}
 
-        RemoteViews rv = new RemoteViews(getPackageName(), R.layout.custom_notification);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            addPendingIntents(rv, info);
-        }
-        if (null != bitmap) {
-            rv.setImageViewBitmap(R.id.iconView, bitmap);
-        }
-        rv.setTextViewText(R.id.titleView, mm.getString(MediaMetadata.KEY_TITLE));
-        String castingTo = getResources().getString(R.string.casting_to_device,
-                mCastManager.getDeviceName());
-        rv.setTextViewText(R.id.subTitleView, castingTo);
-        mNotification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_notification_cast)
-                .setContentIntent(resultPendingIntent)
-                .setContent(rv)
-                .setAutoCancel(false)
-                .setOngoing(true)
-                .build();
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+	private Notification buildNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
+		String castingTo = getString(R.string.casting_to_device, mCastManager.getDeviceName());
+		return new Notification.Builder(this)
+				.setSmallIcon(R.drawable.ic_notification_cast)
+				.setContentTitle(info.getMetadata().getString(MediaMetadata.KEY_TITLE))
+				.setContentText(castingTo)
+				.setContentIntent(getContentPendingIntent(info))
+				.setLargeIcon(bitmap)
+				.addAction(getPlayPauseIconResId(info, mediaStatus),
+						getString(getPlayPauseStringResId(info, mediaStatus)),
+						getPlaybackPendingIntent())
+				.addAction(R.drawable.ic_clear_white_36dp,
+						getString(R.string.disconnect),
+						getDisconnectPendingIntent())
+				.setStyle(new Notification.MediaStyle().setShowActionsInCompactView(0, 1))
+				.setOngoing(true)
+				.setShowWhen(false)
+				.setVisibility(Notification.VISIBILITY_PUBLIC)
+				.build();
+	}
 
-        // to get around a bug in GB version, we add the following line
-        // see https://code.google.com/p/android/issues/detail?id=30495
-        mNotification.contentView = rv;
-    }
+	private int getPlayPauseIconResId(MediaInfo info, int mediaStatus) {
+		if (mediaStatus == MediaStatus.PLAYER_STATE_PLAYING) {
+			return (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
+					? R.drawable.ic_stop_white_36dp
+					: R.drawable.ic_pause_white_36dp;
+		}
+		return R.drawable.ic_play_arrow_white_36dp;
+	}
 
-    private void addPendingIntents(RemoteViews rv, MediaInfo info) {
-        Intent playbackIntent = new Intent(ACTION_TOGGLE_PLAYBACK).setPackage(getPackageName());
-        PendingIntent playbackPendingIntent = PendingIntent.getBroadcast(this, 0, playbackIntent, 0);
+	private int getPlayPauseStringResId(MediaInfo info, int mediaStatus) {
+		if (mediaStatus == MediaStatus.PLAYER_STATE_PLAYING) {
+			return (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
+					? R.string.stop
+					: R.string.pause;
+		}
+		return R.string.play;
+	}
 
-        Intent stopIntent = new Intent(ACTION_STOP).setPackage(getPackageName());
-        PendingIntent stopPendingIntent = PendingIntent.getBroadcast(this, 0, stopIntent, 0);
+	private PendingIntent getContentPendingIntent(MediaInfo info) {
+		Bundle mediaWrapper = Utils.fromMediaInfo(info);
+		Intent contentIntent = new Intent(this, mTargetActivity);
+		contentIntent.putExtra(VideoCastManager.EXTRA_MEDIA, mediaWrapper);
 
-        rv.setOnClickPendingIntent(R.id.playPauseView, playbackPendingIntent);
-        rv.setOnClickPendingIntent(R.id.removeView, stopPendingIntent);
+		// Gets a PendingIntent containing the entire back stack
+		return TaskStackBuilder.create(this)
+				.addParentStack(mTargetActivity)
+				.addNextIntent(contentIntent)
+				.getPendingIntent(NOTIFICATION_ID, PendingIntent.FLAG_UPDATE_CURRENT);
+	}
 
-        if (mStatus == MediaStatus.PLAYER_STATE_BUFFERING) {
-        	rv.setViewVisibility(R.id.loadingView, View.VISIBLE);
-        	rv.setViewVisibility(R.id.playPauseView, View.GONE);
-        } else {
-        	rv.setViewVisibility(R.id.loadingView, View.GONE);
-        	rv.setViewVisibility(R.id.playPauseView, View.VISIBLE);
+	private PendingIntent getPlaybackPendingIntent() {
+		Intent playbackIntent = new Intent(ACTION_TOGGLE_PLAYBACK).setPackage(getPackageName());
+		return PendingIntent.getBroadcast(this, 0, playbackIntent, 0);
+	}
 
-	        int playPauseImageResId;
-	        if (mStatus == MediaStatus.PLAYER_STATE_PLAYING) {
-	        	playPauseImageResId = (info.getStreamType() == MediaInfo.STREAM_TYPE_LIVE)
-	        			? R.drawable.ic_stop_white_36dp : R.drawable.ic_pause_white_36dp;
-	        } else {
-	        	playPauseImageResId = R.drawable.ic_play_arrow_white_36dp;
-	        }
-	        rv.setImageViewResource(R.id.playPauseView, playPauseImageResId);
-        }
-    }
+	private PendingIntent getDisconnectPendingIntent() {
+		Intent stopIntent = new Intent(ACTION_STOP).setPackage(getPackageName());
+		return PendingIntent.getBroadcast(this, 0, stopIntent, 0);
+	}
 }
