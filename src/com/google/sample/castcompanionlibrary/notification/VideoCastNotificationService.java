@@ -19,10 +19,8 @@ package com.google.sample.castcompanionlibrary.notification;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -151,30 +149,15 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 		}, null);
 	}
 
-	/**
-	 * Removes the existing notification.
-	 */
-	private void removeNotification() {
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFICATION_ID);
-	}
-
 	private void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
 		LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached with status: " + mediaStatus);
 		try {
-			switch (mediaStatus) {
-				case MediaStatus.PLAYER_STATE_BUFFERING: // (== 4)
-				case MediaStatus.PLAYER_STATE_PLAYING: // (== 2)
-				case MediaStatus.PLAYER_STATE_PAUSED: // (== 3)
-					setupNotification(mCastManager.getRemoteMediaInformation(), mediaStatus);
-					break;
-				case MediaStatus.PLAYER_STATE_IDLE: // (== 1)
-					if (mCastManager.shouldRemoteUiBeVisible(mediaStatus, mCastManager.getIdleReason())) {
-						setupNotification(mCastManager.getRemoteMediaInformation(), mediaStatus);
-						break;
-					}
-				case MediaStatus.PLAYER_STATE_UNKNOWN: // (== 0)
-					stopForeground(true);
-					break;
+			if (mCastManager.shouldRemoteUiBeVisible(mediaStatus, mCastManager.getIdleReason())) {
+				setupNotification(mCastManager.getRemoteMediaInformation(), mediaStatus);
+			} else {
+				mCastManager.cancelImageRequest(mVideoArtRequest);
+				mNotification = null;
+				stopForeground(true);
 			}
 		} catch (TransientNetworkDisconnectionException e) {
 			LOGE(TAG, "Failed to update the playback status due to network issues", e);
@@ -192,7 +175,6 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 		mCastManager.cancelImageRequest(mVideoArtRequest);
 		mVideoArtRequest = null;
 		LOGD(TAG, "onDestroy was called");
-		removeNotification();
 		mCastManager.removeVideoCastConsumer(mConsumer);
 		mCastManager.removeUiVisibilityListener(this);
 	}
