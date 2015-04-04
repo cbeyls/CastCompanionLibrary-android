@@ -74,6 +74,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/pause"
         android:scaleType="center"
         android:src="@drawable/ic_pause_white_36dp"/>
 

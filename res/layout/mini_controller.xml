@@ -46,6 +46,7 @@
         android:layout_height="48dp"
         android:layout_gravity="center_vertical"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/pause"
         android:scaleType="center"
         android:src="@drawable/ic_mini_controller_pause"/>
 

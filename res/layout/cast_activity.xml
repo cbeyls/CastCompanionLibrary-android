@@ -54,6 +54,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_marginRight="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/pause"
                 android:scaleType="center"
                 android:src="@drawable/ic_pause_white_48dp"/>
 
