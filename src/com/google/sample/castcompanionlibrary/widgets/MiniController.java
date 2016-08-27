@@ -43,7 +43,7 @@ public class MiniController extends FrameLayout implements IMiniController {
 	protected ImageView mPlayPause;
 	protected View mLoading;
 
-	private OnMiniControllerChangedListener mListener;
+	OnMiniControllerChangedListener mListener;
 	private Bitmap mCurrentBitmap;
 	private Drawable mPauseDrawable;
 	private Drawable mPlayDrawable;
@@ -197,7 +197,7 @@ public class MiniController extends FrameLayout implements IMiniController {
 		return isShown();
 	}
 
-	private void setLoadingVisibility(boolean show) {
+	void setLoadingVisibility(boolean show) {
 		mLoading.setVisibility(show ? View.VISIBLE : View.GONE);
 	}
 

@@ -61,7 +61,7 @@ public class RemoteControlClientCompat {
 
 		private final MetadataEditor mActualMetadataEditor;
 
-		private MetadataEditorCompat(MetadataEditor actualMetadataEditor) {
+		MetadataEditorCompat(MetadataEditor actualMetadataEditor) {
 			mActualMetadataEditor = actualMetadataEditor;
 		}
 

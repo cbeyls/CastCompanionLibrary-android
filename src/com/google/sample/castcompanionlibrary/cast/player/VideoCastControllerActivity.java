@@ -41,7 +41,7 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 	private View mPageView;
 	private ImageView mPlayPause;
 	private TextView mLiveText;
-	private TextView mStart;
+	TextView mStart;
 	private TextView mEnd;
 	private SeekBar mSeekbar;
 	private TextView mLine1;
@@ -51,7 +51,7 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 	private Drawable mPauseDrawable;
 	private Drawable mPlayDrawable;
 	private Drawable mStopDrawable;
-	private OnVideoCastControllerListener mListener;
+	OnVideoCastControllerListener mListener;
 	private int mStreamType;
 
 	private StringBuilder mFormatBuilder;
@@ -277,7 +277,7 @@ public class VideoCastControllerActivity extends VideoCastActivity implements IV
 		finish();
 	}
 
-	private String stringForTime(int timeMs) {
+	String stringForTime(int timeMs) {
 		int totalSeconds = timeMs / 1000;
 
 		int seconds = totalSeconds % 60;

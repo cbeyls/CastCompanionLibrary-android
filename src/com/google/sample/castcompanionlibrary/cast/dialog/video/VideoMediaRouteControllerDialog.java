@@ -46,9 +46,9 @@ import com.google.sample.castcompanionlibrary.utils.LogUtils;
  */
 public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog {
 
-	private static final String TAG = LogUtils.makeLogTag(VideoMediaRouteControllerDialog.class);
+	static final String TAG = LogUtils.makeLogTag(VideoMediaRouteControllerDialog.class);
 
-	private ImageView mIcon;
+	ImageView mIcon;
 	private ImageView mPausePlay;
 	private View mTextContainer;
 	private TextView mTitle;
@@ -56,7 +56,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 	private TextView mEmptyText;
 	private View mLoading;
 	private ImageLoader.Request mIconRequest;
-	private final VideoCastManager mCastManager;
+	final VideoCastManager mCastManager;
 	private final VideoCastConsumerImpl castConsumerImpl;
 	private final Drawable mPauseDrawable;
 	private final Drawable mPlayDrawable;
@@ -110,7 +110,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		}
 	}
 
-	private void updateMetadata() {
+	void updateMetadata() {
 		try {
 			MediaInfo info = mCastManager.getRemoteMediaInformation();
 			mStreamType = info.getStreamType();
@@ -143,7 +143,7 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		mIconRequest = mCastManager.loadImage(url, mIconImageLoaderCallbacks, mIconRequest);
 	}
 
-	private void updatePlayPauseState() {
+	void updatePlayPauseState() {
 		if (null != mPausePlay) {
 			int state = mCastManager.getPlaybackStatus();
 			switch (state) {
@@ -186,11 +186,11 @@ public class VideoMediaRouteControllerDialog extends MediaRouteControllerDialog 
 		}
 	}
 
-	private void setLoadingVisibility(boolean show) {
+	void setLoadingVisibility(boolean show) {
 		mLoading.setVisibility(show ? View.VISIBLE : View.GONE);
 	}
 
-	private void setPausePlayVisibility(boolean show) {
+	void setPausePlayVisibility(boolean show) {
 		setPausePlayVisibility(show, null);
 	}
 

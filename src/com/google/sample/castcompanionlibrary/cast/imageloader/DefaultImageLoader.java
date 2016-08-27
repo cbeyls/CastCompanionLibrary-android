@@ -47,7 +47,7 @@ public class DefaultImageLoader implements ImageLoader {
 		}
 	}
 
-	private Bitmap performRequest(String url) {
+	Bitmap performRequest(String url) {
 		// Using a single background thread in sync with the cache guarantees that we only
 		// perform a single network request per image.
 		synchronized (cache) {

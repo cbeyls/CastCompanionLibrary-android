@@ -126,16 +126,16 @@ public class VideoCastManager extends BaseCastManager
         DEVICE
     }
 
-    private static final String TAG = LogUtils.makeLogTag(VideoCastManager.class);
+    static final String TAG = LogUtils.makeLogTag(VideoCastManager.class);
     private static VideoCastManager sInstance;
     private final Class<? extends Activity> mTargetActivity;
-    private final List<IMiniController> mMiniControllers;
-    private Bitmap mMiniControllersIcon;
-    private ImageLoader.Request mMiniControllersIconRequest;
+    final List<IMiniController> mMiniControllers;
+    Bitmap mMiniControllersIcon;
+    ImageLoader.Request mMiniControllersIconRequest;
     private final AudioManager mAudioManager;
     private RemoteMediaPlayer mRemoteMediaPlayer;
-    private RemoteControlClientCompat mRemoteControlClientCompat;
-    private ImageLoader.Request mLockScreenImageRequest;
+    RemoteControlClientCompat mRemoteControlClientCompat;
+    ImageLoader.Request mLockScreenImageRequest;
     private boolean mIsRemoteControlSetup;
     private VolumeType mVolumeType = VolumeType.DEVICE;
     private int mState = MediaStatus.PLAYER_STATE_IDLE;
@@ -144,7 +144,7 @@ public class VideoCastManager extends BaseCastManager
     private final ComponentName mMediaButtonReceiverComponent;
     private final String mDataNamespace;
     private Cast.MessageReceivedCallback mDataChannel;
-    private final List<IVideoCastConsumer> mVideoConsumers;
+    final List<IVideoCastConsumer> mVideoConsumers;
     private final ImageLoader mImageLoader;
 
     /**
@@ -816,7 +816,7 @@ public class VideoCastManager extends BaseCastManager
     /*========== Implementing Cast.Listener ======================================================*/
     /*============================================================================================*/
 
-    private void onApplicationDisconnected(int errorCode) {
+    void onApplicationDisconnected(int errorCode) {
         LOGD(TAG, "onApplicationDisconnected() reached with error code: " + errorCode);
         removeRemoteControlClient();
         for (IVideoCastConsumer consumer : mVideoConsumers) {
@@ -832,7 +832,7 @@ public class VideoCastManager extends BaseCastManager
         stopNotificationService();
     }
 
-    private void onApplicationStatusChanged() {
+    void onApplicationStatusChanged() {
         String appStatus;
         if (!isConnected()) {
             return;
@@ -853,7 +853,7 @@ public class VideoCastManager extends BaseCastManager
         }
     }
 
-    private void onVolumeChanged() {
+    void onVolumeChanged() {
         LOGD(TAG, "onVolumeChanged() reached");
         try {
             double volume = getVolume();
@@ -1421,7 +1421,7 @@ public class VideoCastManager extends BaseCastManager
         }
     }
 
-    private void onMessageSendFailed(int errorCode) {
+    void onMessageSendFailed(int errorCode) {
         for (IVideoCastConsumer consumer : mVideoConsumers) {
             try {
                 consumer.onDataMessageSendFailed(errorCode);
@@ -1494,7 +1494,7 @@ public class VideoCastManager extends BaseCastManager
     /*
      * This is called by onStatusUpdated() of the RemoteMediaPlayer
      */
-    private void onRemoteMediaPlayerStatusUpdated() {
+    void onRemoteMediaPlayerStatusUpdated() {
         LOGD(TAG, "onRemoteMediaPlayerStatusUpdated() reached");
         if (null == mApiClient || null == mRemoteMediaPlayer ||
                 null == mRemoteMediaPlayer.getMediaStatus()) {

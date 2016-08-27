@@ -35,11 +35,11 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 	private static final String EXTRAS = "extras";
 
 	private MediaInfo mSelectedMedia;
-	private VideoCastManager mCastManager;
-	private Handler mHandler;
-	private IVideoCastController mCastController;
+	VideoCastManager mCastManager;
+	Handler mHandler;
+	IVideoCastController mCastController;
 	private ImageLoader.Request mImageRequest;
-	private int mPlaybackState = MediaStatus.PLAYER_STATE_UNKNOWN;
+	int mPlaybackState = MediaStatus.PLAYER_STATE_UNKNOWN;
 	private boolean mIsFresh = false;
 
 	/**
@@ -153,7 +153,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 		}
 	};
 
-	private final Runnable mUpdateSeekbarRunnable = new Runnable() {
+	final Runnable mUpdateSeekbarRunnable = new Runnable() {
 
 		@Override
 		public void run() {
@@ -182,7 +182,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 		mHandler.postDelayed(mUpdateSeekbarRunnable, 100L);
 	}
 
-	private void updateMetadata(MediaInfo mediaInfo) {
+	void updateMetadata(MediaInfo mediaInfo) {
 		if ((mSelectedMedia != null) && mSelectedMedia.equals(mediaInfo)) {
 			return;
 		}
@@ -218,7 +218,7 @@ public class VideoCastControllerFragment extends Fragment implements OnVideoCast
 		mImageRequest = mCastManager.loadImage(url, mImageLoaderCallbacks, mImageRequest);
 	}
 
-	private void updatePlayerStatus() {
+	void updatePlayerStatus() {
 		if (mSelectedMedia == null) {
 			return;
 		}

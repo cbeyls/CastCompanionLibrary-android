@@ -58,13 +58,13 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 			"com.google.sample.castcompanionlibrary.action.toggleplayback";
 	public static final String ACTION_STOP =
 			"com.google.sample.castcompanionlibrary.action.stop";
-	private static int NOTIFICATION_ID = 1;
-	private static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
+	static int NOTIFICATION_ID = 1;
+	static final String TAG = LogUtils.makeLogTag(VideoCastNotificationService.class);
 
-	private VideoCastManager mCastManager;
+	VideoCastManager mCastManager;
 	private Class<? extends Activity> mTargetActivity;
-	private Notification mNotification;
-	private boolean mVisible;
+	Notification mNotification;
+	boolean mVisible;
 	private ImageLoader.Request mVideoArtRequest;
 
 	private final VideoCastConsumerImpl mConsumer = new VideoCastConsumerImpl() {
@@ -149,7 +149,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 		}, null);
 	}
 
-	private void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
+	void onRemoteMediaPlayerStatusUpdated(int mediaStatus) {
 		LOGD(TAG, "onRemoteMediaPlayerMetadataUpdated() reached with status: " + mediaStatus);
 		try {
 			if (mCastManager.shouldRemoteUiBeVisible(mediaStatus, mCastManager.getIdleReason())) {
@@ -183,7 +183,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 	 * Build the notification for Android < LOLLIPOP. We also need to add the appropriate "back stack"
 	 * so when user goes into the CastPlayerActivity, she can have a meaningful "back" experience.
 	 */
-	private Notification buildLegacyNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
+	Notification buildLegacyNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
 		RemoteViews rv = new RemoteViews(getPackageName(), R.layout.custom_notification);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
 			setPlaybackControls(rv, info, mediaStatus);
@@ -224,7 +224,7 @@ public class VideoCastNotificationService extends Service implements VideoCastMa
 	}
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-	private Notification buildNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
+	Notification buildNotification(MediaInfo info, int mediaStatus, Bitmap bitmap) {
 		String castingTo = getString(R.string.casting_to_device, mCastManager.getDeviceName());
 		return new Notification.Builder(this)
 				.setSmallIcon(R.drawable.ic_notification_cast)

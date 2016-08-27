@@ -87,7 +87,7 @@ public abstract class BaseCastManager implements DeviceSelectionListener, Connec
 
     private static String CCL_VERSION;
 
-    private static final String TAG = LogUtils.makeLogTag(BaseCastManager.class);
+    static final String TAG = LogUtils.makeLogTag(BaseCastManager.class);
     private static final int SESSION_RECOVERY_TIMEOUT = 5; // in seconds
     private static final long UI_INVISIBLE_DELAY_MS = 300L;
 
@@ -758,7 +758,7 @@ public void onCastAvailabilityChanged(boolean castPresent) {
 
             // we may need to reconnect to an existing session
             mReconnectionTask = new AsyncTask<Void, Integer, Integer>() {
-                private ProgressDialog dlg;
+                ProgressDialog dlg;
                 private final int SUCCESS = 1;
                 private final int FAILED = 2;
 
