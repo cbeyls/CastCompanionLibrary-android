@@ -1,4 +1,6 @@
-# CastCompanionLibrary-android
+# [DEPRECATED] CastCompanionLibrary-android
+
+> **This project is unmaintained and should not be used anymore. You should instead migrate your code to the [Google Cast SDK v3](https://developers.google.com/cast/v2/ccl_migrate_sender) which is a complete rewrite of the Cast Companion Library including many fixes and improvements.**
 
 This is a fork of the Cast Companion Library for Android by Google. It features fixed bugs, easier integration, improved performance, simpler code and cleaned up resources.
 
